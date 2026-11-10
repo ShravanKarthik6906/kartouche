@@ -163,6 +163,33 @@ Add one entry to `LANGUAGES` in [`languages.py`](languages.py), then add a line 
 characters to `tests/test_languages.py`, which checks that the bundled fonts cover them. Scripts the
 document's own fonts can't show (as with Arabic) need a `font` and its files in `fonts/`.
 
+### Customising the UI
+
+The web UI is plain Jinja templates (`templates/`, all extending `base.html`), one stylesheet
+(`static/styles.css`) and two small scripts (`static/upload.js`, `static/job.js`), with no build step.
+Every colour, size and duration is a CSS custom property on `:root`, redefined for dark mode, so most
+restyling means changing tokens. Fonts are self-hosted in `static/fonts/` (Archivo and Noto Sans Arabic,
+SIL OFL). The app sends a strict Content-Security-Policy, so templates can't use inline `style` attributes
+or inline scripts.
+
+Restyle freely, but keep these hooks. The scripts and tests rely on them (`tests/test_ui_contract.py`
+checks them):
+
+- **Home (`index.html`)**: `#upload-form` (posts to `/upload`), `#document-input` (`name="document"`),
+  `#dropzone`, `#dz-file`, `#document-error`, `#lang-chips` containing `input[name="langs"]` checkboxes,
+  `#langs-error`, `#submit-button`, `#sample-button` (`name="sample" value="1"`, `form="upload-form"`),
+  `#upload-progress`, `#upload-bar`, `#upload-status`, and `data-max-bytes` on the `upload.js` script tag.
+  `#server-error` appears when the server re-renders the page with an error.
+- **Job page (`job.html`)**: `#job` with `data-job-id`, `#job-sub`, `#notices`, `#status-sheet`,
+  `#progress-card`, `#progress-title`, `#progress-pct`, `#progress-bar`, `#progress-fill`, `#eta`,
+  `#checklist`, `#wake-note`, `#error-card`, `#error-title`, `#error-message`, `#ticket-started`,
+  `#results`, `#lang-tabs`, `#lang-panels`, `#tech`, `#tech-meta`, `#log`.
+- **API fields `job.js` reads** (`GET /api/job/<id>`): `status`, `progress`, `eta_seconds`,
+  `steps[].key/label/state/detail`, `langs`, `languages{}.name/native/rtl/state/error`, `notices[]`,
+  `error.code/title/message/detail`, `results{}.summary/downloads/package_name/idml_name`, `usage`,
+  `cost`, `log`, `source_name`, `is_sample`, `created_at`, `started_at`, `finished_at`. The preview comes
+  from `GET /api/job/<id>/preview` (`pages[].stories[].blocks[]`, `langs{}.texts/flags/summary`).
+
 ## Known limitations
 
 An honest list. Please read it before relying on Rosetta for anything important.
@@ -174,7 +201,7 @@ An honest list. Please read it before relying on Rosetta for anything important.
   and the bundled sample. Unusual InDesign features (anchored objects, footnotes, text on paths, complex nested
   tables) may not be handled. Story placement covers frames placed on spreads; text that only lives on master
   pages (running heads, footers) is translated but not measured for fit.
-- **Fit is measured per text fragment, with substitute fonts.** Licensed fonts such as Myriad Pro aren't
+- **Fit is measured per text fragment, with substitute fonts.** Licensed commercial fonts usually aren't
   available on the server, so Latin text is measured with metric-similar open fonts (exact for Arial, close
   for others). InDesign's own line breaking can still differ slightly, so check the flagged items.
 - **Some overflow can't be fixed automatically.** It's flagged in the preview and the QA report for you to

@@ -1,63 +1,62 @@
 {% extends "base.html" %}
 {% block body_class %}page-home{% endblock %}
 {% block main %}
-<section class="hero">
-  <div class="wrap hero-grid">
+<div class="wrap">
+  <section class="sheet hero-sheet" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <p class="eyebrow">For Adobe InDesign files</p>
-      <h1>Translate InDesign documents into other languages</h1>
-      <p class="lede">Formatting, layout and right-to-left included. Upload an <code>.idml</code> file and get back
-        a translated InDesign file, a side-by-side preview you can check in your browser, and a QA report.</p>
-
+      <h1 id="hero-title">Translate InDesign documents into other languages</h1>
+      <p class="lede">Rosetta translates the live text in your <code>.idml</code> file, fits it back into the
+        original frames and sets Arabic right to left. Then it marks everything it changed or couldn't
+        settle, like a proof you check before print.</p>
       <div class="hero-actions">
-        <button class="btn btn-secondary btn-lg" type="submit" form="upload-form" name="sample" value="1" id="sample-button">
-          <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18"><path d="M6 4.5v11l9-5.5z" fill="currentColor"/></svg>
+        <button class="btn btn-primary btn-lg" type="submit" form="upload-form" name="sample" value="1" id="sample-button">
           Try it with a sample lesson
+          <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <p class="hero-note">No file needed. Runs a 3-page math lesson
-          (<a href="/sample.zip">download it</a> to inspect).</p>
+        <p class="aside">No file needed. It runs a 3-page grade-4 math lesson
+          (<a href="/sample.zip">download it</a> to look inside).</p>
       </div>
-
-      <ol class="steps" id="how" aria-label="How it works">
-        <li>
-          <span class="step-num" aria-hidden="true">1</span>
-          <div><h2>Upload</h2><p>An <code>.idml</code> exported from InDesign, or a <code>.zip</code> with its Links folder.</p></div>
-        </li>
-        <li>
-          <span class="step-num" aria-hidden="true">2</span>
-          <div><h2>Choose languages</h2><p>Spanish, French, German, Portuguese and Arabic. Arabic is set right-to-left automatically.</p></div>
-        </li>
-        <li>
-          <span class="step-num" aria-hidden="true">3</span>
-          <div><h2>Review &amp; download</h2><p>Compare original and translation side by side, see what was adjusted to fit, and download a file that opens in InDesign.</p></div>
-        </li>
-      </ol>
+      <figure class="hero-proof" aria-label="Example of a review mark on a proof">
+        <div class="prow flag-review">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span>Use fraction bars to see when two fractions are equal.</div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span><span class="mark-text">Usa barras de fracciones para comparar.</span></div>
+          <div class="margin">
+            <p class="mnote review"><b><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v4.5M8 11.5v.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Example mark: shortened to fit, check the wording</b>Spanish written by hand for this example. The shorter wording drops “when two fractions are equal”.</p>
+          </div>
+        </div>
+      </figure>
     </div>
 
-    <form class="card upload-card" id="upload-form" action="/upload" method="post" enctype="multipart/form-data" novalidate>
-      <h2 class="card-title">Translate a document</h2>
+    <form class="ticket" id="upload-form" action="/upload#upload-form" method="post" enctype="multipart/form-data" novalidate aria-labelledby="ticket-title">
+      <h2 id="ticket-title">Translate your document</h2>
 
       {% if error %}
-      <div class="alert alert-error" role="alert" id="server-error">{{ error }}</div>
+      <div class="note note-error" role="alert" id="server-error">
+        <svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 5.5v5.5M10 14v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>{{ error }}</span>
+      </div>
       {% endif %}
       {% if paused_reason %}
-      <div class="alert alert-warning" role="status">{{ paused_reason }}</div>
+      <div class="note note-warn" role="status">
+        <svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20"><path d="M6.5 4v12M13.5 4v12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span>{{ paused_reason }}</span>
+      </div>
       {% endif %}
 
       <div class="field">
-        <span class="field-label" id="document-label">Document</span>
+        <span class="field-label caps" id="document-label">Document</span>
         <label class="dropzone" id="dropzone" for="document-input">
           <input type="file" id="document-input" name="document" accept=".idml,.zip" aria-labelledby="document-label" aria-describedby="document-hint document-error">
-          <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="28" height="28"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="dz-text"><strong>Drop a file here</strong> or <span class="link-like">browse</span></span>
+          <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="26" height="26"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="dz-text"><strong>Drop an .idml or .zip here</strong><br>or <span class="link-like">choose a file</span></span>
           <span class="dz-file" id="dz-file" hidden></span>
         </label>
-        <p class="hint" id="document-hint">.idml or .zip (with a Links folder, optional) · up to {{ max_upload_mb }} MB{% if max_words %} · up to {{ "{:,}".format(max_words) }} words{% endif %}</p>
+        <p class="hint" id="document-hint">A .zip can include the Links folder. Up to {{ max_upload_mb }} MB{% if max_words %}, {{ "{:,}".format(max_words) }} words{% endif %}.</p>
         <p class="field-error" id="document-error" role="alert" hidden></p>
       </div>
 
       <fieldset class="field">
-        <legend class="field-label">Translate into</legend>
+        <legend class="field-label caps">Translate into</legend>
         <div class="chips" id="lang-chips">
           {% for lang in languages %}
           <label class="chip">
@@ -73,44 +72,82 @@
         Translate document
       </button>
       <div class="upload-progress" id="upload-progress" hidden>
-        <div class="bar"><span id="upload-bar"></span></div>
+        <div class="cmyk-bar"><span id="upload-bar"></span></div>
         <p class="hint" id="upload-status">Uploading…</p>
       </div>
       <p class="fineprint">
-        {% if public_demo %}Free public demo{% if jobs_per_hour %} · {{ jobs_per_hour }} documents per hour{% endif %} · {% endif %}
-        Text is translated by OpenAI. Files are deleted after {{ job_ttl_hours }} hours.
+        {% if public_demo %}Free public demo{% if jobs_per_hour %}: {{ jobs_per_hour }} documents per hour{% endif %}. {% endif %}Text is translated by OpenAI. Files are deleted after {{ job_ttl_hours }} hours.
       </p>
     </form>
-  </div>
-</section>
 
-<section class="features" aria-labelledby="features-title">
-  <div class="wrap">
-    <h2 id="features-title" class="section-title">What Rosetta takes care of</h2>
-    <div class="feature-grid">
-      <article class="feature">
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24"><path d="M6 4h7a4 4 0 0 1 0 8H6zm0 8h8a4 4 0 0 1 0 8H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-        <h3>Keeps the formatting</h3>
-        <p>Bold and italic words mid-sentence, lists, tables and callouts stay styled. Each sentence is translated as a whole, so grammar comes out right.</p>
-      </article>
-      <article class="feature">
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24"><path d="M4 5h16v14H4zM8 9h8M8 13h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h3>Fits the layout</h3>
-        <p>Translations often run long. Rosetta measures text with real font metrics against each frame, then re-wraps, shrinks slightly or shortens the wording, and flags anything it can't fit.</p>
-      </article>
-      <article class="feature">
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24"><path d="M20 7H8m0 0 3-3M8 7l3 3M4 17h12m0 0-3-3m3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h3>Right-to-left ready</h3>
-        <p>Arabic stories are flipped to right-to-left and set in an Arabic font, which is packaged with the file so it shows up correctly in InDesign.</p>
-      </article>
-      <article class="feature">
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24"><path d="M9 12l2 2 4-4M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h3>Checks its own work</h3>
-        <p>A QA report lists anything untranslated, translated inconsistently, or too long for its frame, with the page it's on.</p>
-      </article>
+    <div class="strip-row" aria-hidden="true">
+      <div class="strip">{% for i in range(48) %}<span></span>{% endfor %}</div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <section class="sheet" id="how" aria-labelledby="proof-title">
+    <div class="slug caps">
+      <span>fractions_lesson.idml</span><span>Page 1</span>
+      <span class="slug-end">Illustration: Spanish wording written by hand. Run the sample for live output</span>
+    </div>
+    <div class="section-head">
+      <h2 id="proof-title">What comes back is a marked proof</h2>
+      <p>Original and translation side by side, page by page, in the document's reading order. Anything Rosetta
+        adjusted to fit is noted in the margin; anything it isn't sure about is highlighted for you to check.</p>
+    </div>
+    <div class="proof-demo">
+      <div class="proof">
+        <div class="proof-cols caps" aria-hidden="true"><span>English</span><span>Spanish</span><span>Margin</span></div>
+        <div class="prow k-small">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span><strong>Grade 4 Math · Fractions Unit · Lesson 7</strong></div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span><strong>Matemáticas 4.º grado · Unidad de fracciones · Lección 7</strong></div>
+          <div class="margin"></div>
+        </div>
+        <div class="prow k-heading">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span><strong>Equivalent Fractions</strong></div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span><strong>Fracciones equivalentes</strong></div>
+          <div class="margin">
+            <p class="mnote fixed"><b><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><path d="M3 8h10M3 8l3-3M3 8l3 3M13 8l-3-3M13 8l-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Text size reduced 10% to fit</b>28pt to 25.2pt. The Spanish measured 325pt in a 300pt frame.</p>
+          </div>
+        </div>
+        <div class="prow">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span>Imagine you and a friend each have a sandwich of the same size. You cut yours into <strong>2 equal parts</strong> and eat one part.</div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span>Imagina que tú y un amigo tienen cada uno un sándwich del mismo tamaño. Tú cortas el tuyo en <strong>2 partes iguales</strong> y te comes una parte.</div>
+          <div class="margin"></div>
+        </div>
+        <div class="prow">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span>Fractions that name the same amount are called <strong>equivalent fractions</strong>.</div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span>Las fracciones que representan la misma cantidad se llaman <strong>fracciones equivalentes</strong>.</div>
+          <div class="margin"></div>
+        </div>
+      </div>
+      <ul class="legend" aria-label="What the marks mean">
+        <li><strong class="mnote fixed"><b>Fixed to fit</b></strong>Re-wrapped, or made up to 15% smaller, using the font's real measurements and the frame's real size.</li>
+        <li><strong class="mnote review"><b>Check this</b></strong>Shortened to fit, translated inconsistently, or still too long. Highlighted in the translation.</li>
+        <li><strong class="mnote info"><b>Kept as-is</b></strong>Numbers, fractions and punctuation are never sent for translation.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="steps-title">
+    <div class="slug caps"><span id="steps-title">How it works</span><span>Seconds to a few minutes per document</span></div>
+    <ol class="steps">
+      <li><span class="num" aria-hidden="true">1</span><h3>Upload</h3><p>An <code>.idml</code> exported from InDesign (File › Export › InDesign Markup), or a <code>.zip</code> with its Links folder.</p></li>
+      <li><span class="num" aria-hidden="true">2</span><h3>Choose languages</h3><p>Spanish, French, German, Portuguese and Arabic. Arabic stories are set right to left with an Arabic font included.</p></li>
+      <li><span class="num" aria-hidden="true">3</span><h3>Check and download</h3><p>Read the marked proof in your browser, then download a package that opens in InDesign, plus a QA report.</p></li>
+    </ol>
+  </section>
+
+  <section class="sheet limits" aria-labelledby="limits-title">
+    <h2 id="limits-title">Before you rely on it</h2>
+    <ul>
+      <li>Translations are machine-made. The QA report checks that everything was translated, consistent and fits, not that the wording is right. Have a fluent speaker read it before print.</li>
+      <li>Your text is sent to OpenAI to be translated, so don't upload anything confidential unless that's acceptable to you.</li>
+      <li>Fit is measured per piece of text with open fonts that match your fonts' widths closely. InDesign's own line breaks can still differ slightly.</li>
+      <li>Rosetta has been tested on a limited set of documents. Unusual features such as footnotes or text on a path may not be handled.</li>
+    </ul>
+  </section>
+</div>
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='upload.js') }}" data-max-bytes="{{ max_upload_mb * 1024 * 1024 }}"></script>

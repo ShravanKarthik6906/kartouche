@@ -1,42 +1,60 @@
 {% extends "base.html" %}
-{% block title %}{{ source_name }} — Rosetta{% endblock %}
+{% block title %}{{ source_name }}: Rosetta{% endblock %}
 {% block body_class %}page-job{% endblock %}
 {% block main %}
 <div class="wrap job" id="job" data-job-id="{{ job_id }}">
-  <div class="job-head">
-    <a class="back-link" href="/">&larr; New translation</a>
-    <h1 class="job-title"><span class="file-name">{{ source_name }}</span></h1>
-    <p class="job-sub" id="job-sub">Translating into {% for l in langs %}{{ l.name }}{% if not loop.last %}{% if loop.revindex == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %}</p>
-  </div>
+  <a class="back-link" href="/">
+    <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16"><path d="M16 10H5m4.5-4.5L5 10l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    New translation
+  </a>
 
+  <div class="job-head">
+    <h1 id="job-title">{{ source_name }}</h1>
+    <p class="job-sub" id="job-sub">Translating into {% for l in langs %}{{ l.name }}{% if not loop.last %}{% if loop.revindex == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %}</p>
+
+  </div>
   <div id="notices"></div>
 
-  <section class="card progress-card" id="progress-card" aria-labelledby="progress-title">
-    <div class="progress-top">
-      <h2 id="progress-title" class="card-title">Working on it</h2>
-      <span class="progress-pct" id="progress-pct" aria-hidden="true">0%</span>
-    </div>
-    <div class="bar bar-lg" role="progressbar" aria-labelledby="progress-title" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
-      <span id="progress-fill"></span>
-    </div>
-    <p class="eta" id="eta" aria-live="polite">Starting…</p>
-    <ol class="checklist" id="checklist"></ol>
-    <p class="hint wake-note" id="wake-note">If the site has been idle, the first run can take up to a minute to get going.</p>
-  </section>
+  <div class="sheet status-sheet" id="status-sheet">
+   <div class="status-main">
+    <section class="progress-card" id="progress-card" aria-labelledby="progress-title">
+      <div class="progress-top">
+        <h2 id="progress-title">Working on it</h2>
+        <span class="progress-pct" id="progress-pct" aria-hidden="true">0%</span>
+      </div>
+      <div class="cmyk-bar" role="progressbar" aria-labelledby="progress-title" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+        <span id="progress-fill"></span>
+      </div>
+      <p class="eta" id="eta" aria-live="polite">Starting…</p>
+      <ol class="checklist" id="checklist"></ol>
+      <p class="hint wake-note" id="wake-note">If the site has been idle, the first run can take up to a minute to get going.</p>
+    </section>
 
-  <section class="card error-card" id="error-card" hidden role="alert">
-    <h2 class="card-title" id="error-title"></h2>
-    <p id="error-message"></p>
-    <div class="error-actions">
-      <a class="btn btn-primary" href="/">Start a new translation</a>
-    </div>
-  </section>
+    <section class="error-card" id="error-card" hidden role="alert" aria-labelledby="error-title">
+      <svg class="pencil-ring" aria-hidden="true" viewBox="0 0 48 48" width="48" height="48"><path d="M40 21c1.5 9.5-6 18.5-16 18.5S6.5 32.5 7.5 23 16 7.5 25.5 8.5c6.2.7 11.2 4.6 13.4 9.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M24 16v10M24 31.5v.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+      <h2 id="error-title"></h2>
+      <p id="error-message"></p>
+      <div class="error-actions">
+        <a class="btn btn-primary" href="/">Start a new translation</a>
+      </div>
+    </section>
+   </div>
+   <aside class="job-ticket" aria-label="Job ticket">
+     <p class="caps">Job ticket</p>
+     <dl>
+       <dt>File</dt><dd>{{ source_name }}</dd>
+       <dt>Into</dt><dd>{% for l in langs %}{{ l.name }}{% if not loop.last %}, {% endif %}{% endfor %}</dd>
+       <dt>Started</dt><dd id="ticket-started">Just now</dd>
+     </dl>
+     <p class="hint">Results stay here for {{ job_ttl_hours }} hours. You can close this page and come back to the same link.</p>
+   </aside>
+  </div>
 
-  <section id="results" hidden aria-labelledby="results-title">
-    <h2 class="visually-hidden" id="results-title">Results</h2>
-    <div class="tabs" role="tablist" id="lang-tabs" aria-label="Languages"></div>
-    <div id="lang-panels"></div>
-  </section>
+    <section id="results" hidden aria-labelledby="results-title">
+      <h2 class="visually-hidden" id="results-title">Results</h2>
+      <div class="tabs" role="tablist" id="lang-tabs" aria-label="Languages"></div>
+      <div id="lang-panels"></div>
+    </section>
 
   <details class="tech" id="tech">
     <summary>Technical details</summary>

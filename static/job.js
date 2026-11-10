@@ -1,11 +1,13 @@
-// Job page: polls the job's status, then shows results and the side-by-side
-// preview. All text is inserted with textContent (never innerHTML), so
-// document and translation text can't inject markup.
+// Job page: polls the job's status, then shows results and the marked proof.
+// All document and translation text is inserted with textContent (never
+// innerHTML), so it can't inject markup. Element IDs used here are the
+// contract listed in the README ("Customising the UI").
 (function () {
   "use strict";
   const root = document.getElementById("job");
   const jobId = root.dataset.jobId;
   const $ = (id) => document.getElementById(id);
+  const SVG_NS = "http://www.w3.org/2000/svg";
 
   // Tiny element builder: h("div", {class: "x"}, "text", child, ...)
   function h(tag, attrs, ...children) {
@@ -24,10 +26,43 @@
     return el;
   }
 
+  // Small authored icons (one stroke weight, currentColor).
+  const ICONS = {
+    tick: "M4 10.5l4 4 8-9",
+    caret: "M4 15l6-10 6 10",
+    fit: "M3 8h10M3 8l3-3M3 8l3 3M13 8l-3-3M13 8l-3 3",
+    review: "M8 3v6M8 12v.5",
+    info: "M8 7v5M8 4.5v.5",
+    pause: "M6 4v8M10 4v8",
+  };
+  function icon(name, size) {
+    const s = document.createElementNS(SVG_NS, "svg");
+    const box = (name === "tick" || name === "caret") ? "0 0 20 20" : "0 0 16 16";
+    s.setAttribute("viewBox", box);
+    s.setAttribute("width", size || 14);
+    s.setAttribute("height", size || 14);
+    s.setAttribute("aria-hidden", "true");
+    if (name === "review" || name === "info") {
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", "8"); c.setAttribute("cy", "8"); c.setAttribute("r", "6.5");
+      c.setAttribute("fill", "none"); c.setAttribute("stroke", "currentColor"); c.setAttribute("stroke-width", "1.5");
+      s.append(c);
+    }
+    const p = document.createElementNS(SVG_NS, "path");
+    p.setAttribute("d", ICONS[name]);
+    p.setAttribute("fill", "none");
+    p.setAttribute("stroke", "currentColor");
+    p.setAttribute("stroke-width", (name === "tick" || name === "caret") ? "2.2" : "1.6");
+    p.setAttribute("stroke-linecap", "round");
+    p.setAttribute("stroke-linejoin", "round");
+    s.append(p);
+    return s;
+  }
+
   function fmtDuration(sec) {
-    if (sec < 60) return Math.max(1, Math.round(sec)) + "\u00a0s";
+    if (sec < 60) return Math.max(1, Math.round(sec)) + " s";
     const m = Math.floor(sec / 60), s = Math.round(sec % 60);
-    return m + "\u00a0min" + (s ? " " + s + "\u00a0s" : "");
+    return m + " min" + (s ? " " + s + " s" : "");
   }
 
   function fmtEta(sec) {
@@ -44,6 +79,8 @@
 
   // ------------------------------------------------------------------ progress
 
+  const stepStates = {};
+
   function renderProgress(job) {
     const pct = Math.round(job.progress * 100);
     $("progress-fill").style.width = pct + "%";
@@ -57,25 +94,42 @@
     }
     $("eta").textContent = eta;
 
+    // Update the checklist in place so a step's tick is drawn once, when it finishes.
     const list = $("checklist");
-    list.replaceChildren(...job.steps.map((s) =>
-      h("li", { class: s.state, "aria-current": s.state === "current" ? "step" : null },
-        h("span", { class: "icon", "aria-hidden": "true" }),
-        h("span", {}, s.label,
-          s.state === "done" ? h("span", { class: "visually-hidden", text: " (done)" }) : null,
-          s.detail ? h("span", { class: "detail", text: s.detail }) : null))));
+    job.steps.forEach((s) => {
+      let li = list.querySelector('[data-step="' + s.key + '"]');
+      if (!li) {
+        li = h("li", { "data-step": s.key },
+          h("span", { class: "icon", "aria-hidden": "true" }),
+          h("span", { class: "label" }, h("span", { class: "name", text: s.label }),
+            h("span", { class: "visually-hidden state" }), h("span", { class: "detail" })));
+        list.append(li);
+      }
+      const prev = stepStates[s.key];
+      if (prev !== s.state) {
+        li.className = s.state + (prev && s.state === "done" ? " just-done" : "");
+        const iconEl = li.querySelector(".icon");
+        iconEl.replaceChildren(s.state === "done" ? icon("tick", 18) : s.state === "current" ? icon("caret", 18) : "");
+        li.querySelector(".state").textContent = s.state === "done" ? " (done)" : s.state === "current" ? " (in progress)" : "";
+        if (s.state === "current") li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+        stepStates[s.key] = s.state;
+      }
+      const detail = li.querySelector(".detail");
+      detail.textContent = s.detail || "";
+      detail.hidden = !s.detail;
+    });
     $("wake-note").hidden = job.progress > 0.08;
   }
 
   function renderNotices(job) {
     $("notices").replaceChildren(...(job.notices || []).map((n) =>
-      h("div", { class: "alert " + (n.kind === "warning" ? "alert-warning" : "alert-info"), role: "status" }, n.text)));
+      h("div", { class: "note " + (n.kind === "warning" ? "note-warn" : "note-info"), role: "status" },
+        icon(n.kind === "warning" ? "review" : "info", 20), h("span", { text: n.text }))));
   }
 
   function renderError(job) {
-    const card = $("error-card");
     if (job.status === "interrupted") {
-      $("error-title").textContent = "This job was interrupted";
+      $("error-title").textContent = "This translation was interrupted";
       $("error-message").textContent = "The server restarted while your document was being translated, so it " +
         "didn't finish. Nothing was lost on your side. Please run it again.";
     } else {
@@ -83,7 +137,9 @@
       $("error-title").textContent = err.title || "Something went wrong";
       $("error-message").textContent = err.message || "Please try again.";
     }
-    card.hidden = false;
+    $("error-card").hidden = false;
+    const note = document.querySelector(".job-ticket .hint");
+    if (note) note.hidden = true;  // there are no results to come back to
   }
 
   function renderTech(job) {
@@ -118,58 +174,66 @@
     } catch (e) { /* preview is optional */ }
   }
 
-  function costStat(job) {
+  function costText(job) {
     const u = job.usage || {};
     if (job.cost && job.cost.available) {
       const usd = job.cost.usd;
       const cached = job.is_sample && !u.calls;
-      return { value: usd < 0.01 && usd > 0 ? "<$0.01" : "$" + usd.toFixed(2),
-               note: cached ? "Sample results are cached, so this run was free" : (job.langs.length > 1 ? "Whole job, all languages" : "Whole job") };
+      return {
+        value: usd < 0.01 && usd > 0 ? "under $0.01" : "$" + usd.toFixed(2),
+        note: cached ? "The sample's translations are cached, so this run was free"
+          : (job.langs.length > 1 ? "Whole job, all languages" : "Whole job"),
+      };
     }
-    return { value: "—", note: "Cost not available for this model" };
+    return { value: "Not available", note: "No pricing is configured for this model" };
   }
 
-  function stat(label, value, note, cls) {
-    return h("div", { class: "stat " + (cls || "") },
-      h("div", { class: "label", text: label }),
-      h("div", { class: "value" }, value),
-      note ? h("div", { class: "note", text: note }) : null);
+  function signRow(label, value, note, cls) {
+    return h("tr", {},
+      h("th", { scope: "row", text: label }),
+      h("td", { class: cls || null }, h("span", { class: "val" }, value), note ? h("small", { text: note }) : null));
   }
 
-  function renderSummary(job, lang) {
+  function renderSignoff(job, lang, meta) {
     const r = job.results[lang];
     const s = r.summary;
-    if (!s) return h("div");
-    const fixedBits = [];
-    if (s.fit.shrunk) fixedBits.push(s.fit.shrunk + " made slightly smaller");
-    if (s.fit.shortened) fixedBits.push(s.fit.shortened + " reworded shorter");
-    const cost = costStat(job);
-    return h("div", { class: "summary-grid" },
-      stat("Paragraphs translated",
-        [String(s.paragraphs_translated), h("small", { text: " / " + s.paragraphs_total })],
-        s.paragraphs_translated === s.paragraphs_total ? "Everything was translated" : "Some text kept its original wording",
-        s.paragraphs_translated === s.paragraphs_total ? "good" : "attention"),
-      stat("Auto-fixed to fit", String(s.auto_fixed),
-        fixedBits.length ? fixedBits.join(" · ") : (s.fit.wrapped ? "Everything fit after re-wrapping" : "Everything fit as-is")),
-      stat("Needs your review", String(s.review_items),
-        s.review_items ? "Highlighted in the preview below" : "Nothing was flagged",
-        s.review_items ? "attention" : "good"),
-      stat("API cost", cost.value, cost.note));
-  }
+    const rows = [];
+    if (s) {
+      const fixed = [];
+      if (s.fit.shrunk) fixed.push(s.fit.shrunk + " made slightly smaller");
+      if (s.fit.shortened) fixed.push(s.fit.shortened + " reworded shorter");
+      const all = s.paragraphs_translated === s.paragraphs_total;
+      rows.push(signRow("Paragraphs translated", s.paragraphs_translated + " of " + s.paragraphs_total,
+        all ? "Everything was translated" : "Some text kept its original wording", all ? null : "attention"));
+      rows.push(signRow("Fitted automatically", String(s.auto_fixed),
+        fixed.length ? fixed.join(", ") : (s.fit.wrapped ? "Everything fit after re-wrapping lines" : "Everything fit as-is")));
+      rows.push(signRow("Marked for your review", String(s.review_items),
+        s.review_items ? "Highlighted in the proof below" : "Nothing was marked", s.review_items ? "attention" : null));
+    }
+    const cost = costText(job);
+    rows.push(signRow("API cost", cost.value, cost.note));
 
-  function renderDownloads(job, lang, langMeta) {
-    const r = job.results[lang];
-    return h("div", { class: "downloads" },
+    const table = h("table", { class: "signoff-table" },
+      h("caption", { class: "caps", text: meta.name + " proof" }), h("tbody", {}, rows));
+
+    const dl = h("div", { class: "downloads" },
       h("a", { class: "btn btn-primary btn-lg primary-dl", href: r.downloads.package, download: r.package_name || true },
-        h("span", { text: "Download for InDesign" }),
-        h("span", { class: "sub", text: "Open the .idml inside in Adobe InDesign · includes Links" + (langMeta.rtl ? " and Arabic font" : "") })),
+        h("span", { class: "btn-text" }, h("span", { text: "Download for InDesign" }),
+          h("span", { class: "sub", text: ".zip with the .idml, its Links" + (meta.rtl ? " and the Arabic font" : "") }))),
       h("div", { class: "secondary-links" },
         h("a", { href: r.downloads.idml, download: r.idml_name || true, text: "Just the .idml" }),
         h("a", { href: r.downloads.report, target: "_blank", rel: "noopener", text: "QA report" }),
-        h("a", { href: r.downloads.report_json, download: true, text: "QA data (JSON)" })));
+        h("a", { href: r.downloads.report_json, download: true, text: "QA data (JSON)" })),
+      h("ul", { class: "legend", "aria-label": "What the margin marks mean" },
+        h("li", {}, h("strong", { class: "mnote fixed" }, h("b", { text: "Fixed to fit" })), "Re-wrapped or made slightly smaller. Nothing for you to do."),
+        h("li", {}, h("strong", { class: "mnote review" }, h("b", { text: "Check this" })), "Highlighted in the proof. These are the items counted under review."),
+        h("li", {}, h("strong", { class: "mnote info" }, h("b", { text: "Much longer or shorter" })), "Worth a glance in InDesign. Not counted as needing review.")));
+
+    return h("section", { class: "sheet signoff-sheet", "aria-label": meta.name + " summary and downloads" },
+      h("div", { class: "signoff" }, table, dl));
   }
 
-  function runSpans(runs, texts, translated) {
+  function runSpans(runs, texts, translated, markFlagged) {
     const out = [];
     for (const run of runs) {
       let text = run.text;
@@ -185,6 +249,7 @@
       if (cls) node = h("span", { class: cls, title: "Not translated" }, node);
       out.push(node);
     }
+    if (translated && markFlagged && out.length) return [h("span", { class: "mark-text" }, out)];
     return out;
   }
 
@@ -198,11 +263,12 @@
     return Array.from(seen.values());
   }
 
-  function flagList(list) {
-    if (!list.length) return null;
-    return h("div", { class: "flags" }, list.map((f) =>
-      h("div", { class: "flag " + f.kind }, h("span", { class: "pill", text: f.label }),
-        f.detail ? h("span", { class: "why", text: f.detail }) : null)));
+  const FLAG_ICON = { review: "review", fixed: "fit", info: "info" };
+
+  function marginNotes(list) {
+    return h("div", { class: "margin" }, list.map((f) =>
+      h("p", { class: "mnote " + f.kind }, h("b", {}, icon(FLAG_ICON[f.kind] || "info"), f.label),
+        f.detail ? f.detail : null)));
   }
 
   function rowClass(base, flagsList) {
@@ -211,20 +277,25 @@
     return base;
   }
 
-  function renderPreview(job, lang, langMeta) {
+  function renderPreview(job, lang, meta) {
     const L = previewData && previewData.langs[lang];
     if (!L) {
-      return h("p", { class: "hint", text: "The preview isn't available for this job, but the files above are ready." });
+      return h("p", { class: "hint", text: "The preview isn't available for this translation, but the files above are ready." });
     }
-    const dstAttrs = { class: "dst", lang: lang, dir: langMeta.rtl ? "rtl" : "ltr" };
+    const dstAttrs = { class: "dst", lang: lang, dir: meta.rtl ? "rtl" : "ltr" };
     const container = h("div", { class: "preview-body" });
     let reviewCount = 0;
 
     for (const page of previewData.pages) {
-      const pageEl = h("section", { class: "page-block" },
-        h("h4", { class: "page-label", text: page.name === "Other text" ? "Master pages & other text" : "Page " + page.name }));
+      const other = page.name === "Other text";
+      const sheet = h("section", { class: "sheet preview-sheet page-block", "aria-label": other ? "Master pages and other text" : "Page " + page.name },
+        h("div", { class: "slug caps" },
+          h("span", { text: job.source_name }),
+          h("span", { text: other ? "Master pages & other text" : "Page " + page.name })),
+        h("div", { class: "proof-cols caps", "aria-hidden": "true" },
+          h("span", { text: "English" }), h("span", { text: meta.name }), h("span", { text: "Margin" })));
+      let rows = 0;
       for (const story of page.stories) {
-        const storyEl = h("div", { class: "story" });
         let n = 0;
         for (const block of story.blocks) {
           if (block.type === "para") {
@@ -232,51 +303,49 @@
             const review = fl.some((f) => f.kind === "review");
             if (review) reviewCount++;
             n = block.list === "number" ? n + 1 : 0;
-            const cls = rowClass("row k-" + block.kind + (block.list ? " list list-" + block.list : ""), fl);
-            storyEl.append(h("div", { class: cls, "data-review": review ? "1" : null },
+            const cls = rowClass("prow k-" + block.kind + (block.list ? " list list-" + block.list : ""), fl);
+            sheet.append(h("div", { class: cls, "data-review": review ? "1" : null },
               h("div", { class: "src", lang: "en", "data-n": block.list === "number" ? n : null },
-                h("span", { class: "lang-tag", text: "English" }), runSpans(block.runs, L.texts, false)),
+                h("span", { class: "lang-tag caps", text: "English" }), runSpans(block.runs, L.texts, false)),
               h("div", Object.assign({}, dstAttrs, { "data-n": block.list === "number" ? n : null }),
-                h("span", { class: "lang-tag", text: langMeta.name }), runSpans(block.runs, L.texts, true)),
-              flagList(fl)));
+                h("span", { class: "lang-tag caps", text: meta.name }), runSpans(block.runs, L.texts, true, review)),
+              marginNotes(fl)));
+            rows++;
           } else if (block.type === "table") {
-            const allRuns = block.rows.flat().flat();
-            const fl = flagsFor(allRuns, L.flags);
+            const fl = flagsFor(block.rows.flat().flat(), L.flags);
             const review = fl.some((f) => f.kind === "review");
             if (review) reviewCount++;
             const table = (translated) => h("div", { class: "mtable-wrap" }, h("table", { class: "mtable" },
               h("tbody", {}, block.rows.map((row) => h("tr", {}, row.map((cell) => {
                 const cf = flagsFor(cell, L.flags);
-                return h("td", { class: cf.some((f) => f.kind === "review") ? "flag-review" : null },
+                return h("td", { class: translated && cf.some((f) => f.kind === "review") ? "flag-review" : null },
                   runSpans(cell, L.texts, translated));
               }))))));
-            storyEl.append(h("div", { class: rowClass("row table-row", fl), "data-review": review ? "1" : null },
-              h("div", { class: "src", lang: "en" }, h("span", { class: "lang-tag", text: "English" }), table(false)),
-              h("div", dstAttrs, h("span", { class: "lang-tag", text: langMeta.name }), table(true)),
-              flagList(fl)));
+            sheet.append(h("div", { class: rowClass("prow table-row", fl), "data-review": review ? "1" : null },
+              h("div", { class: "src", lang: "en" }, h("span", { class: "lang-tag caps", text: "English" }), table(false)),
+              h("div", dstAttrs, h("span", { class: "lang-tag caps", text: meta.name }), table(true)),
+              marginNotes(fl)));
+            rows++;
           }
         }
-        if (storyEl.children.length) pageEl.append(storyEl);
       }
-      container.append(pageEl);
+      if (rows) container.append(sheet);
     }
 
-    const empty = h("p", { class: "empty-filter", hidden: true, text: "Nothing needs review. Every paragraph was translated and fits." });
+    const empty = h("p", { class: "empty-filter", hidden: true, text: "Nothing is marked for review. Every paragraph was translated and fits." });
     container.append(empty);
     const toggle = h("input", {
       type: "checkbox", onchange: (e) => {
         const only = e.target.checked;
-        container.querySelectorAll(".row").forEach((r) => { r.hidden = only && !r.dataset.review; });
-        container.querySelectorAll(".story").forEach((s) => { s.hidden = only && !s.querySelector(".row:not([hidden])"); });
-        container.querySelectorAll(".page-block").forEach((p) => { p.hidden = only && !p.querySelector(".story:not([hidden])"); });
+        container.querySelectorAll(".prow").forEach((r) => { r.hidden = only && !r.dataset.review; });
+        container.querySelectorAll(".page-block").forEach((p) => { p.hidden = only && !p.querySelector(".prow:not([hidden])"); });
         empty.hidden = !(only && reviewCount === 0);
       },
     });
-    return h("section", { class: "preview", "aria-label": "Side-by-side preview" },
+    return h("section", { class: "preview", "aria-label": "Marked proof: original and translation" },
       h("div", { class: "preview-head" },
         h("h3", { text: "Original and translation" }),
         h("label", { class: "toggle" }, toggle, "Only show items to review (" + reviewCount + ")")),
-      h("div", { class: "preview-cols", "aria-hidden": "true" }, h("span", { text: "English" }), h("span", { text: langMeta.name })),
       container);
   }
 
@@ -300,12 +369,14 @@
 
       const panel = h("div", { role: "tabpanel", id: "panel-" + lang, "aria-labelledby": "tab-" + lang, hidden: lang !== firstOk });
       if (ok) {
-        panel.append(renderSummary(job, lang), renderDownloads(job, lang, meta), renderPreview(job, lang, meta));
+        panel.append(renderSignoff(job, lang, meta), renderPreview(job, lang, meta));
       } else {
         const err = meta.error || {};
-        panel.append(h("div", { class: "card error-card lang-error" },
-          h("h3", { class: "card-title", text: meta.name + ": " + (err.title || "This language didn't finish") }),
+        panel.append(h("div", { class: "sheet error-card lang-error" },
+          icon("review", 40),
+          h("h3", { text: meta.name + ": " + (err.title || "this language didn't finish") }),
           h("p", { text: err.message || "Please try again." })));
+        panel.querySelector("svg").classList.add("pencil-ring");
       }
       panels.append(panel);
     });
@@ -361,6 +432,7 @@
 
     renderNotices(job);
     renderTech(job);
+    if (job.created_at) $("ticket-started").textContent = new Date(job.created_at * 1000).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
     const names = job.langs.map((l) => job.languages[l].name);
 
     if (job.status === "queued" || job.status === "running") {
@@ -370,16 +442,19 @@
     }
 
     $("progress-card").hidden = true;
-    const took = job.finished_at && job.started_at ? " · finished in " + fmtDuration(job.finished_at - job.started_at) : "";
+    if (job.status === "done") $("status-sheet").hidden = true;
+    const took = job.finished_at && job.started_at ? ", finished in " + fmtDuration(job.finished_at - job.started_at) : "";
     if (job.status === "done") {
       const okNames = job.langs.filter((l) => job.results[l]).map((l) => job.languages[l].name);
-      $("job-sub").textContent = "Translated into " + joinNames(okNames) + took;
-      document.title = "Done — " + job.source_name + " — Rosetta";
+      const failed = job.langs.filter((l) => !job.results[l]).map((l) => job.languages[l].name);
+      $("job-sub").textContent = "Translated into " + joinNames(okNames) + took +
+        (failed.length ? ". " + joinNames(failed) + (failed.length > 1 ? " didn't" : " didn't") + " finish: see the tab for why." : "");
+      document.title = "Done: " + job.source_name + ": Rosetta";
       await loadPreview();
       renderResults(job);
     } else {
       $("job-sub").textContent = "Couldn't finish translating into " + joinNames(names);
-      document.title = "Didn't finish — " + job.source_name + " — Rosetta";
+      document.title = "Didn't finish: " + job.source_name + ": Rosetta";
       renderError(job);
     }
   }

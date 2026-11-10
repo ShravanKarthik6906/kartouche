@@ -3,23 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Rosetta — Translate InDesign documents{% endblock %}</title>
-  <meta name="description" content="Translate InDesign documents into other languages — formatting, layout and right-to-left included.">
-  <meta name="theme-color" content="#2349a8">
+  <title>{% block title %}Rosetta: translate InDesign documents{% endblock %}</title>
+  <meta name="description" content="Translate InDesign documents into other languages, with the formatting, layout and right-to-left text taken care of.">
+  <meta name="theme-color" content="#d9dad6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101113" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
-  <link rel="preload" href="/fonts/Inter-Regular.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preload" href="{{ url_for('static', filename='fonts/Archivo-VF.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="/" aria-label="Rosetta home">
-        <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="28" height="28">
-        <span>Rosetta</span>
+      <a class="brand" href="/" aria-label="Rosetta, home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="16" cy="16" r="9"/><circle cx="16" cy="16" r="4.5"/><path d="M16 2v28M2 16h28"/></g>
+        </svg>
+        <span class="brand-name">Rosetta</span>
       </a>
       <nav class="header-nav" aria-label="Main">
-        <a href="/#how">How it works</a>
+        <a href="/#how" class="optional">How it works</a>
         <a href="/sample.zip">Sample file</a>
         <a href="https://github.com/ShravanKarthik6906/rosetta-translator" rel="noopener">GitHub</a>
       </nav>
@@ -32,9 +35,8 @@
 
   <footer class="site-footer">
     <div class="wrap footer-inner">
-      <p>Rosetta translates the live text in InDesign files. Text is sent to OpenAI for translation;
-        uploaded files and results are deleted after {{ job_ttl_hours }} hours.</p>
-      <p><a href="https://github.com/ShravanKarthik6906/rosetta-translator" rel="noopener">Open source</a> · MIT licence</p>
+      <p>Text is sent to OpenAI to be translated. Uploaded files and results are deleted after {{ job_ttl_hours }} hours.</p>
+      <p><a href="https://github.com/ShravanKarthik6906/rosetta-translator" rel="noopener">Open source</a>, MIT licence. Fonts: Archivo and Noto Sans Arabic (SIL OFL).</p>
     </div>
   </footer>
   {% block scripts %}{% endblock %}
