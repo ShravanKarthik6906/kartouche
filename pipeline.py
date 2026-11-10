@@ -198,7 +198,11 @@ class JobRunner:
                                 f"original wording. They're listed in the QA report.")
                 self.set_lang(lang, "translated")
             except llm.FatalAPIError as exc:
-                # Will fail the same way for every language not yet translated.
+                if exc.code not in llm.FATAL_CODES:
+                    # Repeated failures specific to this language: give up on it, try the next.
+                    self.fail_lang(lang, exc, "translation")
+                    continue
+                # Account-wide (bad key, no credit, budget...): every remaining language would fail too.
                 for later in self.langs[i:]:
                     if later not in self.failed:
                         self.fail_lang(later, exc, "translation")

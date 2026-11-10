@@ -1,7 +1,11 @@
 .env
 *.db
+*.db-wal
+*.db-shm
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 webapp_jobs/
 .claude/
+samples/*.tmp

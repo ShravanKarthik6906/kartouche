@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run tests (no API key needed - OpenAI is mocked)
+        run: pytest
+      - name: Check the sample IDML is valid and up to date
+        run: |
+          python idml_check.py samples/fractions_lesson/fractions_lesson.idml
+          python samples/make_sample.py
+          git diff --exit-code -- samples/
