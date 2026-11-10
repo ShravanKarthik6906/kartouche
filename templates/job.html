@@ -1,50 +1,50 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Rosetta - Job {{ job_id }}</title>
-  <style>
-    body { font-family: -apple-system, system-ui, sans-serif; max-width: 720px; margin: 40px auto; color: #1a1a1a; }
-    h1 { font-size: 20px; }
-    .stage-box { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .stage-name { font-weight: 600; font-size: 16px; }
-    .progress-bar { background: #eee; border-radius: 6px; height: 10px; margin-top: 10px; overflow: hidden; }
-    .progress-fill { background: #1a1a1a; height: 100%; width: 0%; transition: width 0.2s; }
-    .progress-text { color: #666; font-size: 13px; margin-top: 6px; }
-    .log { background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 12px 16px; font-family: monospace; font-size: 12.5px; max-height: 220px; overflow-y: auto; white-space: pre-wrap; }
-    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-    .status-running { background: #fff3cd; color: #856404; }
-    .status-done { background: #d4edda; color: #155724; }
-    .status-error { background: #f8d7da; color: #721c24; }
-    .results { margin-top: 20px; }
-    .lang-result { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; }
-    .lang-result h3 { margin: 0 0 8px 0; font-size: 15px; }
-    .downloads a { display: inline-block; margin-right: 16px; color: #0645ad; text-decoration: none; font-size: 14px; }
-    .downloads a:hover { text-decoration: underline; }
-    .downloads a.secondary { color: #888; font-size: 13px; }
-    .exc-counts { color: #555; font-size: 13px; margin-top: 8px; }
-    .usage-box { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; margin-top: 20px; }
-    .usage-box .note { color: #a66; font-size: 13px; margin-top: 6px; }
-    .error-box { background: #f8d7da; color: #721c24; border-radius: 8px; padding: 16px 20px; margin-top: 20px; }
-    a.back { font-size: 13px; }
-  </style>
-</head>
-<body>
-  <h1>Translation job <code>{{ job_id }}</code> <span id="status-badge" class="status-badge status-running">running</span></h1>
-
-  <div class="stage-box">
-    <div class="stage-name" id="stage-name">Starting...</div>
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-    <div class="progress-text" id="progress-text"></div>
+{% extends "base.html" %}
+{% block title %}{{ source_name }} — Rosetta{% endblock %}
+{% block body_class %}page-job{% endblock %}
+{% block main %}
+<div class="wrap job" id="job" data-job-id="{{ job_id }}">
+  <div class="job-head">
+    <a class="back-link" href="/">&larr; New translation</a>
+    <h1 class="job-title"><span class="file-name">{{ source_name }}</span></h1>
+    <p class="job-sub" id="job-sub">Translating into {% for l in langs %}{{ l.name }}{% if not loop.last %}{% if loop.revindex == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %}</p>
   </div>
 
-  <div class="log" id="log"></div>
+  <div id="notices"></div>
 
-  <div id="results" class="results"></div>
-  <div id="error-box"></div>
+  <section class="card progress-card" id="progress-card" aria-labelledby="progress-title">
+    <div class="progress-top">
+      <h2 id="progress-title" class="card-title">Working on it</h2>
+      <span class="progress-pct" id="progress-pct" aria-hidden="true">0%</span>
+    </div>
+    <div class="bar bar-lg" role="progressbar" aria-labelledby="progress-title" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+      <span id="progress-fill"></span>
+    </div>
+    <p class="eta" id="eta" aria-live="polite">Starting…</p>
+    <ol class="checklist" id="checklist"></ol>
+    <p class="hint wake-note" id="wake-note">If the site has been idle, the first run can take up to a minute to get going.</p>
+  </section>
 
-  <p style="margin-top:24px;"><a class="back" href="/">&larr; Start another translation</a></p>
+  <section class="card error-card" id="error-card" hidden role="alert">
+    <h2 class="card-title" id="error-title"></h2>
+    <p id="error-message"></p>
+    <div class="error-actions">
+      <a class="btn btn-primary" href="/">Start a new translation</a>
+    </div>
+  </section>
 
-  <script src="{{ url_for('static', filename='app.js') }}" data-job-id="{{ job_id }}"></script>
-</body>
-</html>
+  <section id="results" hidden aria-labelledby="results-title">
+    <h2 class="visually-hidden" id="results-title">Results</h2>
+    <div class="tabs" role="tablist" id="lang-tabs" aria-label="Languages"></div>
+    <div id="lang-panels"></div>
+  </section>
+
+  <details class="tech" id="tech">
+    <summary>Technical details</summary>
+    <dl class="tech-meta" id="tech-meta"></dl>
+    <pre class="log" id="log" tabindex="0"></pre>
+  </details>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='job.js') }}"></script>
+{% endblock %}

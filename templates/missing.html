@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Not found — Rosetta{% endblock %}
+{% block main %}
+<div class="wrap narrow">
+  <section class="card message-card">
+    <h1 class="card-title">We couldn't find that translation</h1>
+    <p>Results are kept for {{ job_ttl_hours }} hours and then deleted, so this one may have expired, or the link
+      may be incomplete.</p>
+    <p><a class="btn btn-primary" href="/">Start a new translation</a></p>
+  </section>
+</div>
+{% endblock %}

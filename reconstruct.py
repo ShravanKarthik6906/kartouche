@@ -48,6 +48,8 @@ import re
 from pathlib import Path
 from lxml import etree
 
+import languages
+
 IDML_NS = "{http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging}"
 
 # Matches LinkResourceURI="file:<anything>/Links/<filename>" so it can be
@@ -233,6 +235,11 @@ def rewrite_link_resource_uris(work_dir: Path):
     return total
 
 
+def _needs_translation(conn, text_run_id):
+    row = conn.execute("SELECT needs_translation FROM text_runs WHERE id = ?", (text_run_id,)).fetchone()
+    return bool(row and row[0])
+
+
 def reconstruct(db_path: str, document_id: int, target_language: str,
                  idml_extracted_dir: str, work_dir: str, idml_filename: str = None,
                  progress_callback=None):
@@ -244,6 +251,13 @@ def reconstruct(db_path: str, document_id: int, target_language: str,
     """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
+
+    # Per-language behaviour comes from languages.py: right-to-left story
+    # direction, and a script font applied to translated runs (e.g. Arabic).
+    lang_cfg = languages.LANGUAGES.get(target_language)
+    is_rtl = bool(lang_cfg and lang_cfg.rtl)
+    script_font = lang_cfg.font if lang_cfg and lang_cfg.font else None
+    script_font_files = lang_cfg.font_files if script_font else {}
 
     doc_row = conn.execute(
         "SELECT source_idml_filename FROM documents WHERE id = ?", (document_id,)
@@ -321,14 +335,14 @@ def reconstruct(db_path: str, document_id: int, target_language: str,
                 needs_shrink = overflow is not None and overflow["final_point_size"] is not None \
                     and abs(overflow["final_point_size"] - overflow["original_point_size"]) > 0.01
                 char_style_range = None
-                if target_language == "ar" or needs_shrink:
+                if script_font or needs_shrink:
                     char_style_range = find_enclosing_character_style_range(elem)
 
-                if target_language == "ar":
-                    if not apply_font_override(char_style_range, ARABIC_FALLBACK_FONT):
+                if script_font:
+                    if not apply_font_override(char_style_range, script_font):
                         print(f"  WARNING: story {story['story_self_id']} text_run_id "
                               f"{frag['id']} - no enclosing CharacterStyleRange found, "
-                              f"could not apply {ARABIC_FALLBACK_FONT} font override.")
+                              f"could not apply {script_font} font override.")
 
                 if needs_shrink:
                     # Tier 3: a real, measured overflow was resolved with a
@@ -344,6 +358,10 @@ def reconstruct(db_path: str, document_id: int, target_language: str,
                 # fallback report (printed as a summary at the end) instead of
                 # just a scrolling console warning.
                 elem.text = frag["raw_text"]
+                if translation is not None and translation["status"] == "skipped":
+                    continue  # numbers/punctuation kept as-is on purpose - not missing
+                if translation is None and not _needs_translation(conn, frag["id"]):
+                    continue
                 total_missing += 1
                 reason = "no translation row" if translation is None else f"status={translation['status']}"
                 fallback_report.append({
@@ -355,7 +373,7 @@ def reconstruct(db_path: str, document_id: int, target_language: str,
                     "reason": reason,
                 })
 
-        if target_language == "ar":
+        if is_rtl:
             total_rtl_flips += flip_story_direction(root)
 
         tree.write(str(story_path), xml_declaration=True, encoding="UTF-8", standalone=True)
@@ -363,11 +381,11 @@ def reconstruct(db_path: str, document_id: int, target_language: str,
         if progress_callback:
             progress_callback(story_index + 1, len(stories))
 
-    if target_language == "ar" and total_replaced > 0:
+    if script_font and total_replaced > 0:
         fonts_xml_path = work / "Resources" / "Fonts.xml"
         if fonts_xml_path.exists():
             ensure_font_family_declared(
-                fonts_xml_path, ARABIC_FALLBACK_FONT, list(ARABIC_FALLBACK_FONT_FILES.keys())
+                fonts_xml_path, script_font, list(script_font_files.keys())
             )
 
     # Covers Stories/, Spreads/ and MasterSpreads/ in one pass - the latter
@@ -428,12 +446,12 @@ def reconstruct(db_path: str, document_id: int, target_language: str,
                 if file_path.is_file():
                     arcname = str(Path("Links") / file_path.relative_to(links_dir))
                     zf.write(file_path, arcname=arcname)
-        if target_language == "ar" and total_replaced > 0:
+        if script_font and total_replaced > 0:
             # Embed the actual Arabic font files so rendering doesn't depend
             # on that font being pre-installed on whatever machine opens the
             # file - InDesign auto-detects a "Document Fonts" folder placed
             # next to the package. See fonts/OFL.txt for the license.
-            for style_name, filename in ARABIC_FALLBACK_FONT_FILES.items():
+            for style_name, filename in script_font_files.items():
                 font_file = FONTS_ASSET_DIR / filename
                 if font_file.exists():
                     zf.write(font_file, arcname=str(Path("Document Fonts") / filename))

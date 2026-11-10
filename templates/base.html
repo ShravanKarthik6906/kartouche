@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Rosetta — Translate InDesign documents{% endblock %}</title>
+  <meta name="description" content="Translate InDesign documents into other languages — formatting, layout and right-to-left included.">
+  <meta name="theme-color" content="#2349a8">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="preload" href="/fonts/Inter-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/" aria-label="Rosetta home">
+        <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="28" height="28">
+        <span>Rosetta</span>
+      </a>
+      <nav class="header-nav" aria-label="Main">
+        <a href="/#how">How it works</a>
+        <a href="/sample.zip">Sample file</a>
+        <a href="https://github.com/ShravanKarthik6906/rosetta-translator" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    {% block main %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>Rosetta translates the live text in InDesign files. Text is sent to OpenAI for translation;
+        uploaded files and results are deleted after {{ job_ttl_hours }} hours.</p>
+      <p><a href="https://github.com/ShravanKarthik6906/rosetta-translator" rel="noopener">Open source</a> · MIT licence</p>
+    </div>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -67,12 +67,32 @@ FONT_SUBSTITUTES = {
     ("Museo Sans", "900"): (str(FONTS_ASSET_DIR / "Inter-Black.ttf"), None),
     ("Bunday Sans", "Heavy"): (str(FONTS_ASSET_DIR / "Inter-ExtraBold.ttf"), None),  # no Heavy face; nearest available
     ("Bunday Sans", "ExtraBold"): (str(FONTS_ASSET_DIR / "Inter-ExtraBold.ttf"), None),
+    # Arial: Liberation Sans is designed to be metric-compatible with Arial
+    # (identical advance widths), so measurement is exact, not approximate.
+    ("Arial", "Regular"): (str(FONTS_ASSET_DIR / "LiberationSans-Regular.ttf"), None),
+    ("Arial", "Bold"): (str(FONTS_ASSET_DIR / "LiberationSans-Bold.ttf"), None),
+    ("Arial", "Italic"): (str(FONTS_ASSET_DIR / "LiberationSans-Italic.ttf"), None),
+    ("Arial", "Bold Italic"): (str(FONTS_ASSET_DIR / "LiberationSans-Bold.ttf"), None),  # no Bold Italic bundled; same width class
+    # Bundled fonts used directly by a document are measured with themselves.
+    ("Liberation Sans", "Regular"): (str(FONTS_ASSET_DIR / "LiberationSans-Regular.ttf"), None),
+    ("Liberation Sans", "Bold"): (str(FONTS_ASSET_DIR / "LiberationSans-Bold.ttf"), None),
+    ("Liberation Sans", "Italic"): (str(FONTS_ASSET_DIR / "LiberationSans-Italic.ttf"), None),
+    ("Inter", "Regular"): (str(FONTS_ASSET_DIR / "Inter-Regular.ttf"), None),
+    ("Inter", "Medium"): (str(FONTS_ASSET_DIR / "Inter-Medium.ttf"), None),
+    ("Inter", "Bold"): (str(FONTS_ASSET_DIR / "Inter-Bold.ttf"), None),
+    ("Inter", "Extra Bold"): (str(FONTS_ASSET_DIR / "Inter-ExtraBold.ttf"), None),
+    ("Inter", "Black"): (str(FONTS_ASSET_DIR / "Inter-Black.ttf"), None),
 }
+# Substitutes whose metrics match the real font exactly.
+FONT_SUBSTITUTES_EXACT = {key for key in FONT_SUBSTITUTES if key[0] in ("Arial", "Liberation Sans", "Inter")} - {
+    ("Arial", "Bold Italic")}
 # Approximate flags: substitutes with no exact weight match in the target family.
 FONT_SUBSTITUTES_APPROXIMATE = {
     ("Myriad Pro", "Black"), ("Myriad Pro", "Semibold"), ("Myriad Pro", "SemiCondensed"),
-    ("Bunday Sans", "Heavy"),
+    ("Bunday Sans", "Heavy"), ("Arial", "Bold Italic"),
 }
+
+import languages
 
 ARABIC_FONT_REGULAR = (str(FONTS_ASSET_DIR / "NotoSansArabic-Regular.ttf"), None)
 ARABIC_FONT_BOLD = (str(FONTS_ASSET_DIR / "NotoSansArabic-Bold.ttf"), None)
@@ -167,14 +187,20 @@ def resolve_font_file(family, font_style, target_language):
     Arabic (see reconstruct.py) - exact, not a substitute. Everything else
     goes through FONT_SUBSTITUTES.
     """
-    if target_language == "ar":
+    lang = languages.LANGUAGES.get(target_language)
+    if lang is not None and lang.font:
+        # Languages with their own script font (e.g. Arabic) are rendered in
+        # that bundled font (see reconstruct.py), so this is exact.
         bold = font_style and ("bold" in font_style.lower() or font_style in ("700", "900", "Heavy"))
-        path, num = ARABIC_FONT_BOLD if bold else ARABIC_FONT_REGULAR
-        return path, num, False, "Real font (Noto Sans Arabic) - this is what actually renders in the delivered document."
+        file_name = lang.font_files.get("Bold" if bold else "Regular") or lang.font_files["Regular"]
+        return (str(FONTS_ASSET_DIR / file_name), None, False,
+                f"Real font ({lang.font}) - this is what actually renders in the delivered document.")
 
     key = (family, font_style)
     if key in FONT_SUBSTITUTES:
         path, num = FONT_SUBSTITUTES[key]
+        if key in FONT_SUBSTITUTES_EXACT:
+            return path, num, False, f"Measured with {Path(path).stem}, which has the same metrics as {family}."
         approx = key in FONT_SUBSTITUTES_APPROXIMATE
         note = (f"Substitute font: real '{family} {font_style}' not available on this machine; "
                 f"measured with {Path(path).stem}" + (" (no exact weight match, nearest used)" if approx else "") + ".")
@@ -200,9 +226,11 @@ def measure_text_width_pt(text, family, font_style, point_size, target_language)
     buf = hb.Buffer()
     buf.add_str(text)
     buf.guess_segment_properties()
-    if target_language == "ar":
+    lang = languages.LANGUAGES.get(target_language)
+    if lang is not None and lang.rtl:
         buf.direction = "rtl"
-        buf.script = "Arab"
+    if lang is not None and lang.script:
+        buf.script = lang.script
     hb.shape(font, buf)
 
     total_units = sum(pos.x_advance for pos in buf.glyph_positions)

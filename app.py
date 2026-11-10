@@ -1,498 +1,416 @@
 """
-Rosetta v3 - web UI
-Thin Flask wrapper around the existing pipeline scripts (deconstruct.py,
-story_placements.py, translate.py, reconstruct.py, exception_checks.py).
-This file does NOT reimplement any pipeline logic - it just: validates an
-upload, runs the existing functions in a background thread while reporting
-progress via their optional progress_callback/usage_callback hooks, and
-serves the resulting files.
+Rosetta web app.
 
-Local dev:
-    .venv/bin/python app.py
-then open http://127.0.0.1:5050 (reads PORT from the environment if set,
-defaults to 5050; binds 0.0.0.0 so this also works unchanged when a host
-platform like Render runs it behind gunicorn).
+A thin Flask layer over the pipeline: it validates uploads (uploads.py),
+runs the pipeline in a background thread (pipeline.py), keeps job state on
+disk (jobs.py), enforces the public-demo limits (limits.py), and serves the
+results, preview and downloads. No translation or layout logic lives here.
 
-Optional access gate: set SITE_PASSWORD in the environment to require HTTP
-Basic Auth (any username, that password) on every request - this app makes
-real, billed OpenAI calls per upload, so a public deployment SHOULD set
-this. Leave it unset for local-only use.
+Run locally:
+    python app.py            # http://127.0.0.1:5050
+
+Settings come from environment variables / .env; see config.py and
+.env.example. Two modes:
+  * private (default): optional SITE_PASSWORD (HTTP Basic Auth), no limits;
+  * PUBLIC_DEMO=true: open to everyone, with per-visitor rate limits, a
+    document size limit and a daily spending cap.
 """
 
-import json
+import logging
 import os
 import shutil
-import sqlite3
 import threading
 import time
-import uuid
-from html import escape
-import zipfile
 from pathlib import Path
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort, Response
+from flask import (Flask, Response, abort, jsonify, redirect, render_template, request, send_file,
+                   send_from_directory, url_for)
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-import deconstruct
-import story_placements
+import config
+import languages
+import limits
+import llm
 import translate
-import overflow_resolve
-import reconstruct
-import exception_checks
+import uploads
+from jobs import STEPS, JobStore, new_job_id
+from pipeline import JobRunner
+from state import StateDB
 
-app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500MB - real IDML+Links bundles can be large
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("rosetta.app")
 
-SITE_PASSWORD = os.environ.get("SITE_PASSWORD")  # optional - unset means no gate (local dev default)
-
-
-@app.before_request
-def require_site_password():
-    if not SITE_PASSWORD:
-        return
-    auth = request.authorization
-    if not auth or auth.password != SITE_PASSWORD:
-        return Response(
-            "Authentication required.", 401,
-            {"WWW-Authenticate": 'Basic realm="Rosetta"'}
-        )
+ROOT = Path(__file__).resolve().parent
+FONT_FILES = {"Inter-Regular.ttf", "Inter-Medium.ttf", "Inter-Bold.ttf",
+              "NotoSansArabic-Regular.ttf", "NotoSansArabic-Bold.ttf"}
+CLEANUP_INTERVAL_SECONDS = 30 * 60
 
 
-JOBS_ROOT = Path(__file__).parent / "webapp_jobs"
-JOBS_ROOT.mkdir(exist_ok=True)
+def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
+    """
+    settings: a config.Settings (defaults to the environment).
+    openai_factory: callable returning an OpenAI-compatible client, used
+    instead of the real one (tests pass a fake). Called lazily, only when a
+    call actually has to reach the API.
+    """
+    s = settings or config.settings
+    app = Flask(__name__)
+    app.config["MAX_CONTENT_LENGTH"] = s.max_upload_bytes
+    app.config["SETTINGS"] = s
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=int(os.environ.get("PROXY_COUNT", "1")), x_proto=1)
 
-LANGUAGE_LABELS = {"es": "Spanish", "ar": "Arabic"}
+    s.data_dir.mkdir(parents=True, exist_ok=True)
+    db = StateDB(s.data_dir / "state.db")
+    store = JobStore(db, s.data_dir / "jobs")
+    store.mark_orphans_interrupted()
+    ledger = limits.SpendLedger(db, s.daily_spend_cap_usd)
+    limiter = limits.RateLimiter(db)
+    model = translate.DEFAULT_MODEL
+    app.extensions["rosetta"] = {"db": db, "store": store, "ledger": ledger, "limiter": limiter}
 
-# Prices are USD per 1,000,000 tokens. VERIFY against https://openai.com/api/pricing/
-# before trusting a number here - only as accurate as when last checked, and
-# intentionally does NOT include an entry for every model (see compute_cost).
-PRICING = {
-    "gpt-4o": {"input": 2.50, "output": 10.00},
-    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    "gpt-5-mini": {"input": 0.25, "output": 2.00},  # verified vs OpenAI pricing page, early Sep 2026
-}
+    def cleanup():
+        try:
+            n = store.cleanup(s.job_ttl_hours)
+            if n:
+                log.info("Cleaned up %d old job(s)", n)
+        except Exception:
+            log.exception("Cleanup failed")
 
-JOBS = {}
-JOBS_LOCK = threading.Lock()
+    cleanup()
+    if start_cleanup_thread:
+        def loop():
+            while True:
+                time.sleep(CLEANUP_INTERVAL_SECONDS)
+                cleanup()
+        threading.Thread(target=loop, daemon=True, name="rosetta-cleanup").start()
 
+    # ------------------------------------------------------------ access + headers
 
-# ---------------------------------------------------------------- job state
+    @app.before_request
+    def gate():
+        if not s.site_password or request.path == "/healthz":
+            return None
+        auth = request.authorization
+        if not auth or auth.password != s.site_password:
+            return Response("Authentication required.", 401, {"WWW-Authenticate": 'Basic realm="Rosetta"'})
+        return None
 
-def _new_job(job_id, langs):
-    with JOBS_LOCK:
-        JOBS[job_id] = {
-            "id": job_id,
-            "status": "running",  # running | done | error
-            "stage": "starting",
-            "stage_progress": None,  # [done, total] or None
-            "langs": langs,
-            "log": [],
-            "error": None,
-            "results": {},
-            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0, "model": None},
-            "created_at": time.time(),
+    @app.after_request
+    def headers(resp):
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("Referrer-Policy", "same-origin")
+        if resp.mimetype == "text/html" and not request.path.startswith("/download/"):
+            resp.headers.setdefault(
+                "Content-Security-Policy",
+                "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
+                "font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+        return resp
+
+    # ------------------------------------------------------------ helpers
+
+    def lang_list():
+        return [{"code": l.code, "name": l.name, "native": l.native, "rtl": l.rtl,
+                 "selected": l.code in languages.DEFAULT_SELECTION} for l in languages.LANGUAGES.values()]
+
+    def uploads_paused_reason():
+        """Why new (non-sample) uploads can't start right now, or None."""
+        if not llm.has_api_key() and openai_factory is None:
+            return ("Translation isn't set up on this server yet (there's no OpenAI API key), so only the sample "
+                    "lesson can run, and only if its translations are already cached.")
+        if s.public_demo and not limits.price_for(model):
+            return "Uploads are paused: this demo can't track the cost of the configured translation model."
+        if s.public_demo and ledger.cap_reached():
+            return ("Uploads are paused for today because this demo's daily translation budget has been used. "
+                    "You can still try the sample lesson, and uploads reopen tomorrow (UTC).")
+        return None
+
+    def page_context(**extra):
+        ctx = {
+            "languages": lang_list(),
+            "public_demo": s.public_demo,
+            "max_upload_mb": int(s.max_upload_mb),
+            "max_words": s.max_words,
+            "jobs_per_hour": s.jobs_per_hour,
+            "job_ttl_hours": int(s.job_ttl_hours),
+            "paused_reason": uploads_paused_reason(),
         }
+        ctx.update(extra)
+        return ctx
 
+    def wants_json():
+        return request.headers.get("X-Requested-With") == "fetch" or \
+            request.accept_mimetypes.best == "application/json"
 
-def _update_job(job_id, **kwargs):
-    with JOBS_LOCK:
-        if job_id in JOBS:
-            JOBS[job_id].update(kwargs)
+    def fail(message, status=400, field=None):
+        if wants_json():
+            return jsonify({"error": message, "field": field}), status
+        return render_template("index.html", **page_context(error=message)), status
 
+    def visitor_id():
+        return request.remote_addr or "unknown"
 
-def _log_job(job_id, message):
-    with JOBS_LOCK:
-        if job_id in JOBS:
-            JOBS[job_id]["log"].append(message)
-            JOBS[job_id]["log"] = JOBS[job_id]["log"][-300:]
+    def make_client(is_sample):
+        client = llm.LazyClient(openai_factory or llm.make_client)
+        if s.public_demo:
+            def before_call():
+                if not limits.price_for(model):
+                    raise llm.BudgetExceeded("no pricing configured for the model")
+                if ledger.cap_reached():
+                    raise llm.BudgetExceeded("daily spending cap reached")
+            client = llm.GuardedClient(client, before_call)
+        if is_sample:
+            client = llm.CachingClient(client, s.sample_cache_path, seed_paths=[s.sample_cache_seed])
+        return client
 
+    # ------------------------------------------------------------ pages
 
-def _get_job(job_id):
-    with JOBS_LOCK:
-        job = JOBS.get(job_id)
-        return json.loads(json.dumps(job)) if job is not None else None  # cheap deep copy
+    @app.route("/")
+    def index():
+        return render_template("index.html", **page_context())
 
+    @app.route("/healthz")
+    def healthz():
+        return {"ok": True}
 
-def _add_usage(job_id, model, prompt_tokens, completion_tokens):
-    with JOBS_LOCK:
-        if job_id not in JOBS:
-            return
-        u = JOBS[job_id]["usage"]
-        u["prompt_tokens"] += prompt_tokens
-        u["completion_tokens"] += completion_tokens
-        u["total_tokens"] += prompt_tokens + completion_tokens
-        u["calls"] += 1
-        u["model"] = model
+    @app.route("/sample.zip")
+    def sample_download():
+        return send_file(s.sample_zip, as_attachment=True, download_name="rosetta_sample_fractions_lesson.zip")
 
+    @app.route("/fonts/<name>")
+    def fonts(name):
+        if name not in FONT_FILES:
+            abort(404)
+        resp = send_from_directory(ROOT / "fonts", name, max_age=7 * 24 * 3600)
+        return resp
 
-def compute_cost(usage):
-    model = usage.get("model")
-    pricing = PRICING.get(model)
-    if not pricing:
-        return {
-            "available": False,
-            "model": model,
-            "note": (
-                f"No verified pricing configured for model '{model}'. Token counts above are "
-                f"accurate (from the real API response); add pricing to PRICING in app.py to "
-                f"compute a dollar figure - check https://openai.com/api/pricing/ first."
-            ),
-        }
-    usd = (usage["prompt_tokens"] / 1e6) * pricing["input"] + (usage["completion_tokens"] / 1e6) * pricing["output"]
-    return {"available": True, "model": model, "usd": round(usd, 4)}
+    @app.route("/upload", methods=["POST"])
+    def upload():
+        is_sample = request.form.get("sample") == "1"
+        chosen = set(request.form.getlist("langs"))
+        langs = [code for code in languages.LANGUAGES if code in chosen]
+        if not langs:
+            return fail("Choose at least one language to translate into.", field="langs")
 
+        if s.public_demo:
+            kind, limit = ("sample", s.samples_per_hour) if is_sample else ("upload", s.jobs_per_hour)
+            ok, wait = limiter.check(visitor_id(), kind, limit)
+            if not ok:
+                mins = max(1, round(wait / 60))
+                what = "sample runs" if is_sample else "translations"
+                return fail(f"You've reached this demo's limit of {limit} {what} per hour. "
+                            f"Please try again in about {mins} minute{'s' if mins != 1 else ''}.", 429)
+            if store.running_count() >= s.max_concurrent_jobs:
+                return fail("Rosetta is busy with other translations right now. Please try again in a minute.", 503)
 
-# ---------------------------------------------------------------- upload validation
+        if not is_sample:
+            paused = uploads_paused_reason()
+            if paused:
+                return fail(paused, 503)
+            file = request.files.get("document")
+            if not file or not file.filename:
+                return fail("Choose an .idml or .zip file to upload.", field="document")
 
-def _is_macos_junk_path(name: str) -> bool:
-    """
-    True for macOS Finder's AppleDouble junk: a top-level __MACOSX/ folder
-    (mirroring the real structure with resource-fork files) and any
-    individual ._filename entry it drops alongside real files. Finder's
-    "Compress" always adds these to a zip - they must be ignored when
-    looking for the real .idml/Links contents, or a mirrored
-    __MACOSX/Links/._foo.idml can look like a second real .idml.
-    """
-    parts = name.split("/")
-    return "__MACOSX" in parts or any(part.startswith("._") for part in parts)
+        job_id = new_job_id()
+        job_dir = store.job_dir(job_id)
+        job_dir.mkdir(parents=True)
+        try:
+            if is_sample:
+                filename = "fractions_lesson.zip"
+                upload_path = job_dir / "upload.zip"
+                shutil.copyfile(s.sample_zip, upload_path)
+            else:
+                filename = Path(file.filename).name
+                upload_path = job_dir / ("upload" + Path(filename).suffix.lower())
+                file.save(upload_path)
+            prepared = uploads.prepare_upload(upload_path, filename, job_dir)
+        except uploads.UploadError as e:
+            shutil.rmtree(job_dir, ignore_errors=True)
+            return fail(str(e), field="document")
+        except Exception:
+            log.exception("Unexpected error preparing upload")
+            shutil.rmtree(job_dir, ignore_errors=True)
+            return fail("Something went wrong while reading that file. Please check it and try again.", 500)
 
+        if s.max_words and prepared.word_count > s.max_words and not is_sample:
+            shutil.rmtree(job_dir, ignore_errors=True)
+            return fail(f"This document has about {prepared.word_count:,} words to translate. The public demo "
+                        f"accepts up to {s.max_words:,} words per document. Rosetta is open source, so you can "
+                        f"run it yourself for larger documents.", 413, field="document")
 
-def validate_upload_zip(path: Path):
-    """
-    Returns (ok: bool, message: str, idml_member: str | None).
-    Checks the zip contains exactly one .idml file and a 'Links' folder,
-    without extracting or running anything. Ignores macOS AppleDouble junk
-    (__MACOSX/, ._*) that Finder's "Compress" adds to zips.
-    """
-    try:
-        zf = zipfile.ZipFile(path)
-    except zipfile.BadZipFile:
-        return False, "That file isn't a valid zip archive.", None
+        notices = []
+        if prepared.links_missing and not prepared.links_provided:
+            n = len(prepared.links_missing)
+            notices.append({"kind": "info", "text":
+                            f"No Links folder was included, so the {n} linked image{'s' if n != 1 else ''} in "
+                            f"this document won't be packaged with the result. The text is translated as normal. "
+                            f"Put the images in a Links folder next to the translated .idml and InDesign will "
+                            f"relink them."})
+        elif prepared.links_missing:
+            n = len(prepared.links_missing)
+            shown = ", ".join(prepared.links_missing[:3]) + (" and others" if n > 3 else "")
+            notices.append({"kind": "info", "text":
+                            f"{n} linked file{'s were' if n != 1 else ' was'} missing from the Links folder "
+                            f"({shown}). The text is translated as normal; relink those images in InDesign."})
 
-    try:
-        names = [n for n in zf.namelist() if not _is_macos_junk_path(n)]
-    except Exception:
-        return False, "Couldn't read the contents of that zip archive.", None
+        if s.public_demo:
+            limiter.record(visitor_id(), "sample" if is_sample else "upload")
 
-    idml_members = [n for n in names if n.lower().endswith(".idml") and not n.endswith("/")]
-    has_links_folder = any(part == "Links" for n in names for part in n.split("/"))
+        store.create(job_id, langs=langs, source_name=prepared.idml_filename, is_sample=is_sample,
+                     notices=notices, word_count=prepared.word_count)
+        client = make_client(is_sample)
 
-    if not idml_members:
-        return False, "No .idml file found in the uploaded zip. Expected one .idml file plus a Links folder.", None
-    if len(idml_members) > 1:
-        return False, f"Found {len(idml_members)} .idml files in the zip - expected exactly one ({', '.join(idml_members)}).", None
-    if not has_links_folder:
-        return False, "No 'Links' folder found in the uploaded zip. Expected one .idml file plus a Links folder alongside it.", None
+        def on_usage(call_model, prompt_tokens, completion_tokens):
+            store.add_usage(job_id, call_model, prompt_tokens, completion_tokens)
+            cost = limits.cost_usd(call_model, prompt_tokens, completion_tokens)
+            if cost:
+                ledger.add(cost)
 
-    return True, "OK", idml_members[0]
+        runner = JobRunner(store, job_id, job_dir=job_dir, extracted_dir=prepared.extracted_dir,
+                           idml_filename=prepared.idml_filename, langs=langs, client=client, model=model,
+                           on_usage=on_usage, public=s.public_demo)
+        app.extensions["rosetta"].setdefault("runners", {})[job_id] = runner
 
+        def run():
+            try:
+                runner.run()
+            finally:
+                app.extensions["rosetta"]["runners"].pop(job_id, None)
 
-def find_subdir(base: Path, name: str):
-    direct = base / name
-    if direct.is_dir():
-        return direct
-    for p in base.rglob(name):
-        if p.is_dir() and "__MACOSX" not in p.parts:
-            return p
-    return None
+        threading.Thread(target=run, daemon=True, name=f"rosetta-job-{job_id}").start()
+        target = url_for("job_page", job_id=job_id)
+        if wants_json():
+            return jsonify({"job_url": target})
+        return redirect(target)
 
+    @app.errorhandler(413)
+    def too_large(_e):
+        return fail(f"That file is larger than the {int(s.max_upload_mb)} MB upload limit. If your Links "
+                    f"folder is large, try uploading just the .idml file.", 413, field="document")
 
-# ---------------------------------------------------------------- pipeline runner
+    @app.route("/job/<job_id>")
+    def job_page(job_id):
+        job = store.get(job_id)
+        if job is None:
+            return render_template("missing.html", **page_context()), 404
+        return render_template("job.html", job_id=job_id, source_name=job["source_name"],
+                               langs=[languages.get(l) for l in job["langs"] if l in languages.LANGUAGES],
+                               **page_context())
 
-def run_pipeline(job_id, job_dir: Path, idml_extracted_dir: Path, idml_filename: str, langs: list):
-    try:
-        db_path = str(job_dir / "rosetta.db")
+    # ------------------------------------------------------------ API
 
-        # --- Stage 1: deconstruct ---
-        _update_job(job_id, stage="deconstruct", stage_progress=None)
-        _log_job(job_id, "Deconstructing IDML: extracting every text run...")
-        document_id = deconstruct.deconstruct(
-            str(idml_extracted_dir), idml_filename, db_path,
-            progress_callback=lambda done, total: _update_job(job_id, stage_progress=[done, total]),
-        )
-        _log_job(job_id, f"Deconstruct complete (document_id={document_id}).")
+    def public_view(job):
+        steps_done = set(job.get("steps_done") or [])
+        total_weight = sum(w for _k, _l, w in STEPS)
+        done_weight, steps = 0.0, []
+        sp = job.get("step_progress") or {}
+        for key, label, weight in STEPS:
+            if key in steps_done or job["status"] == "done":
+                state = "done"
+                done_weight += weight
+            elif key == job.get("step") and job["status"] == "running":
+                state = "current"
+                done_weight += weight * sp.get("fraction", 0.0)
+            else:
+                state = "pending"
+            steps.append({"key": key, "label": label, "state": state,
+                          "detail": sp.get("detail") if state == "current" else None})
 
-        # --- Stage 2: story placements (page/frame mapping) ---
-        _update_job(job_id, stage="story_placements", stage_progress=None)
-        _log_job(job_id, "Mapping stories to pages/frames...")
-        story_placements.populate_story_placements(
-            db_path, document_id, str(idml_extracted_dir),
-            progress_callback=lambda done, total: _update_job(job_id, stage_progress=[done, total]),
-        )
-        _log_job(job_id, "Story placement mapping complete.")
+        eta = None
+        if job["status"] == "running" and job.get("step") == "translate" and job.get("step_started_at"):
+            frac = sp.get("fraction", 0.0)
+            elapsed = time.time() - job["step_started_at"]
+            if frac >= 0.05 and elapsed >= 3:
+                eta = int(elapsed * (1 - frac) / frac * 1.15) + 5
 
-        # --- Stage 3: translate (all selected languages, real API calls) ---
-        _update_job(job_id, stage="translate", stage_progress=None)
-        _log_job(job_id, f"Translating into {', '.join(LANGUAGE_LABELS[l] for l in langs)}...")
-        stats = translate.translate_document(
-            db_path, document_id, target_langs=langs,
-            progress_callback=lambda done, total: _update_job(job_id, stage_progress=[done, total]),
-            usage_callback=lambda model, p, c: _add_usage(job_id, model, p, c),
-        )
-        _log_job(job_id, f"Translation complete: {stats}")
-
-        # --- Stage 3b: overflow check (real font-metric + frame-geometry fit,
-        # controlled shrink, retranslate-for-brevity on genuine failures) ---
-        _update_job(job_id, stage="overflow check", stage_progress=None)
-        _log_job(job_id, "Checking real layout fit (font metrics + frame geometry) and fixing overflow...")
-        overflow_stats = overflow_resolve.run_overflow_checks(
-            db_path, document_id, str(idml_extracted_dir), langs,
-            progress_callback=lambda done, total: _update_job(job_id, stage_progress=[done, total]),
-            usage_callback=lambda model, p, c: _add_usage(job_id, model, p, c),
-        )
-        _log_job(job_id, f"Overflow check complete: {overflow_stats}")
-
-        # --- Stage 4: reconstruct delivery package per language ---
         results = {}
-        for lang in langs:
-            _update_job(job_id, stage=f"reconstruct ({LANGUAGE_LABELS[lang]})", stage_progress=None)
-            _log_job(job_id, f"Rebuilding the {LANGUAGE_LABELS[lang]} .idml + delivery package...")
-            work_dir = job_dir / f"work_{lang}"
-            recon_result = reconstruct.reconstruct(
-                db_path, document_id, lang, str(idml_extracted_dir), str(work_dir),
-                idml_filename=idml_filename,
-                progress_callback=lambda done, total: _update_job(job_id, stage_progress=[done, total]),
-            )
+        for lang, r in (job.get("results") or {}).items():
+            if "package" not in r:
+                continue
+            base = f"/download/{job['id']}/{lang}"
             results[lang] = {
-                "delivery_zip_path": recon_result["bundle_path"],
-                "replaced": recon_result["replaced"],
-                "missing": recon_result["missing"],
-                "rtl_flips": recon_result["rtl_flips"],
+                "summary": r.get("summary"),
+                "exception_count": r.get("exception_count"),
+                "downloads": {"package": f"{base}/package", "idml": f"{base}/idml",
+                              "report": f"{base}/report", "report_json": f"{base}/report_json"},
+                "package_name": r.get("download_package_name"),
+                "idml_name": r.get("download_idml_name"),
             }
-            _log_job(job_id, f"{LANGUAGE_LABELS[lang]} delivery package ready "
-                              f"({recon_result['replaced']} fragments translated).")
 
-        # --- Stage 5: exception checks + per-language report ---
-        _update_job(job_id, stage="exception checks", stage_progress=None)
-        _log_job(job_id, "Running exception checks (translation consistency, missing translations, layout risk)...")
-        exc_results = exception_checks.run_all_checks(
-            db_path, document_id, langs,
-            progress_callback=lambda done, total: _update_job(job_id, stage_progress=[done, total]),
-        )
-        for lang in langs:
-            exceptions = _fetch_exceptions(db_path, document_id, lang)
-            html_path = job_dir / f"exceptions_{lang}.html"
-            json_path = job_dir / f"exceptions_{lang}.json"
-            _write_exception_report_html(exceptions, document_id, lang, html_path)
-            _write_exception_report_json(exceptions, document_id, lang, json_path)
-            results[lang]["exception_report_html_path"] = str(html_path)
-            results[lang]["exception_report_json_path"] = str(json_path)
-            results[lang]["exception_counts"] = exc_results[lang]
-        _log_job(job_id, "Exception checks complete.")
+        cost = job.get("cost")
+        if cost is None and job.get("usage"):
+            cost = limits.compute_cost(job["usage"])
+        lang_meta = {}
+        for code in job["langs"]:
+            lang = languages.LANGUAGES.get(code)
+            lang_meta[code] = {"name": lang.name if lang else code, "native": lang.native if lang else code,
+                               "rtl": bool(lang and lang.rtl), **job["lang_status"].get(code, {})}
 
-        cost = compute_cost(_get_job(job_id)["usage"])
-        _update_job(job_id, status="done", stage="done", stage_progress=None, results=results, cost=cost)
-        _log_job(job_id, "All done.")
+        status = job["status"]
+        return {
+            "id": job["id"],
+            "status": status,
+            "source_name": job["source_name"],
+            "is_sample": job.get("is_sample", False),
+            "progress": 1.0 if status == "done" else round(done_weight / total_weight, 4),
+            "eta_seconds": eta,
+            "steps": steps,
+            "langs": job["langs"],
+            "languages": lang_meta,
+            "notices": job.get("notices", []),
+            "error": job.get("error"),
+            "results": results,
+            "usage": job.get("usage"),
+            "cost": cost,
+            "log": job.get("log", []),
+            "created_at": job.get("created_at"),
+            "started_at": job.get("started_at"),
+            "finished_at": job.get("finished_at"),
+        }
 
-    except Exception as e:
-        _log_job(job_id, f"ERROR: {e}")
-        _update_job(job_id, status="error", error=str(e))
+    @app.route("/api/job/<job_id>")
+    def api_job(job_id):
+        job = store.get(job_id)
+        if job is None:
+            return jsonify({"error": "not_found"}), 404
+        return jsonify(public_view(job))
 
+    @app.route("/api/job/<job_id>/preview")
+    def api_preview(job_id):
+        job = store.get(job_id)
+        path = store.job_dir(job_id) / "preview.json"
+        if job is None or not path.exists():
+            return jsonify({"error": "not_found"}), 404
+        return Response(path.read_text(encoding="utf-8"), mimetype="application/json")
 
-def _fetch_exceptions(db_path, document_id, lang):
-    """Returns a list of dicts: id, category, severity, description, status,
-    created_at, text_run_ids - the full data behind both report formats."""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    exceptions = conn.execute("""
-        SELECT id, category, severity, description, status, created_at
-        FROM exceptions WHERE document_id=? AND target_language=?
-        ORDER BY CASE severity WHEN 'HIGH' THEN 0 WHEN 'MED' THEN 1 ELSE 2 END, category, id
-    """, (document_id, lang)).fetchall()
+    @app.route("/download/<job_id>/<lang>/<kind>")
+    def download(job_id, lang, kind):
+        job = store.get(job_id)
+        if job is None:
+            abort(404)
+        r = (job.get("results") or {}).get(lang)
+        if not r:
+            abort(404)
+        job_dir = store.job_dir(job_id)
+        spec = {
+            "package": (r.get("package"), r.get("download_package_name"), True),
+            "idml": (r.get("idml"), r.get("download_idml_name"), True),
+            "report": (r.get("report_html"), f"QA_report_{lang}.html", False),
+            "report_json": (r.get("report_json"), f"QA_report_{lang}.json", True),
+        }.get(kind)
+        if not spec or not spec[0]:
+            abort(404)
+        path = (job_dir / spec[0]).resolve()
+        if job_dir.resolve() not in path.parents or not path.exists():
+            abort(404)
+        return send_file(path, as_attachment=spec[2], download_name=spec[1])
 
-    report = []
-    for exc in exceptions:
-        frag_ids = [r[0] for r in conn.execute(
-            "SELECT text_run_id FROM exception_fragments WHERE exception_id=?", (exc["id"],)
-        ).fetchall()]
-        row = dict(exc)
-        row["text_run_ids"] = frag_ids
-        report.append(row)
-    conn.close()
-    return report
-
-
-def _write_exception_report_json(exceptions, document_id, lang, out_path: Path):
-    out_path.write_text(json.dumps({
-        "document_id": document_id,
-        "target_language": lang,
-        "total_exceptions": len(exceptions),
-        "exceptions": exceptions,
-    }, indent=2, ensure_ascii=False))
-
-
-CATEGORY_LABELS = {
-    "translation_error": "Inconsistent translation",
-    "missing_translation": "Missing translation",
-    "layout_risk_heuristic": "Possible layout risk",
-}
-
-SEVERITY_COLORS = {"HIGH": "#f8d7da", "MED": "#fff3cd", "LOW": "#e2e3e5"}
-SEVERITY_TEXT_COLORS = {"HIGH": "#721c24", "MED": "#856404", "LOW": "#383d41"}
-
-
-def _write_exception_report_html(exceptions, document_id, lang, out_path: Path):
-    """
-    A plain-English, single-file HTML report - the primary/default download.
-    Each row: category, severity, description (already includes a
-    "Page N, Frame F" location, produced by exception_checks.py), grouped
-    by severity (HIGH first) then category, matching the order they're
-    already stored in from _fetch_exceptions.
-    """
-    lang_label = LANGUAGE_LABELS.get(lang, lang)
-
-    if not exceptions:
-        body = '<p class="empty">No exceptions found for this language. 🎉</p>'
-    else:
-        rows = []
-        current_severity = None
-        for exc in exceptions:
-            if exc["severity"] != current_severity:
-                current_severity = exc["severity"]
-                rows.append(f'<h2 class="severity-heading">{current_severity} severity</h2>')
-            bg = SEVERITY_COLORS.get(exc["severity"], "#e2e3e5")
-            fg = SEVERITY_TEXT_COLORS.get(exc["severity"], "#383d41")
-            category_label = CATEGORY_LABELS.get(exc["category"], exc["category"])
-            rows.append(f'''
-            <div class="exception-card">
-              <div class="exception-header">
-                <span class="badge" style="background:{bg};color:{fg}">{exc["severity"]}</span>
-                <span class="category">{category_label}</span>
-              </div>
-              <p class="description">{escape(exc["description"])}</p>
-            </div>''')
-        body = "\n".join(rows)
-
-    html = f"""<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Exception report - {lang_label}</title>
-<style>
-  body {{ font-family: -apple-system, system-ui, sans-serif; max-width: 760px; margin: 40px auto; color: #1a1a1a; padding: 0 20px; }}
-  h1 {{ font-size: 22px; margin-bottom: 4px; }}
-  .subtitle {{ color: #666; margin-bottom: 28px; }}
-  .severity-heading {{ font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; color: #888; margin: 28px 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; }}
-  .severity-heading:first-of-type {{ margin-top: 0; }}
-  .exception-card {{ border: 1px solid #ddd; border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; }}
-  .exception-header {{ display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }}
-  .badge {{ font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; letter-spacing: 0.03em; }}
-  .category {{ font-weight: 600; font-size: 14px; }}
-  .description {{ margin: 0; color: #333; line-height: 1.5; font-size: 14px; }}
-  .empty {{ color: #666; font-size: 15px; }}
-  .footer {{ margin-top: 32px; color: #999; font-size: 12px; }}
-</style>
-</head>
-<body>
-  <h1>Exception report - {lang_label}</h1>
-  <p class="subtitle">{len(exceptions)} exception(s) found for document #{document_id}.</p>
-  {body}
-  <p class="footer">Generated by Rosetta. A machine-readable version of this same data is available as a JSON download alongside this report.</p>
-</body>
-</html>"""
-    out_path.write_text(html, encoding="utf-8")
+    return app
 
 
-# ---------------------------------------------------------------- routes
-
-@app.route("/")
-def index():
-    return render_template("index.html", languages=LANGUAGE_LABELS)
-
-
-@app.route("/upload", methods=["POST"])
-def upload():
-    file = request.files.get("idml_zip")
-    langs = request.form.getlist("langs")
-
-    if not file or file.filename == "":
-        return render_template("index.html", languages=LANGUAGE_LABELS, error="Please choose a .zip file to upload."), 400
-    if not langs:
-        return render_template("index.html", languages=LANGUAGE_LABELS, error="Select at least one target language."), 400
-
-    job_id = uuid.uuid4().hex[:12]
-    job_dir = JOBS_ROOT / job_id
-    job_dir.mkdir(parents=True)
-
-    upload_path = job_dir / "upload.zip"
-    file.save(upload_path)
-
-    ok, message, idml_member = validate_upload_zip(upload_path)
-    if not ok:
-        shutil.rmtree(job_dir, ignore_errors=True)
-        return render_template("index.html", languages=LANGUAGE_LABELS, error=message), 400
-
-    try:
-        extract_dir = job_dir / "uploaded_contents"
-        with zipfile.ZipFile(upload_path) as zf:
-            zf.extractall(extract_dir)
-
-        idml_source_path = extract_dir / idml_member
-        idml_filename = Path(idml_member).name
-
-        links_dir = find_subdir(extract_dir, "Links")
-        if links_dir is None:
-            raise RuntimeError("Links folder disappeared after extraction (unexpected).")
-
-        idml_extracted_dir = job_dir / "idml_extracted"
-        with zipfile.ZipFile(idml_source_path) as zf:
-            zf.extractall(idml_extracted_dir)
-        shutil.copytree(links_dir, idml_extracted_dir / "Links")
-    except Exception as e:
-        shutil.rmtree(job_dir, ignore_errors=True)
-        return render_template(
-            "index.html", languages=LANGUAGE_LABELS,
-            error=f"Couldn't unpack the uploaded file: {e}"
-        ), 400
-
-    _new_job(job_id, langs)
-    thread = threading.Thread(
-        target=run_pipeline,
-        args=(job_id, job_dir, idml_extracted_dir, idml_filename, langs),
-        daemon=True,
-    )
-    thread.start()
-
-    return redirect(url_for("job_page", job_id=job_id))
-
-
-@app.route("/job/<job_id>")
-def job_page(job_id):
-    if _get_job(job_id) is None:
-        abort(404)
-    return render_template("job.html", job_id=job_id, languages=LANGUAGE_LABELS)
-
-
-@app.route("/api/job/<job_id>")
-def api_job(job_id):
-    job = _get_job(job_id)
-    if job is None:
-        return jsonify({"error": "not found"}), 404
-    return jsonify(job)
-
-
-@app.route("/download/<job_id>/<lang>/<kind>")
-def download(job_id, lang, kind):
-    job = _get_job(job_id)
-    if job is None or job["status"] != "done":
-        abort(404)
-    result = job["results"].get(lang)
-    if not result:
-        abort(404)
-    key = {
-        "delivery": "delivery_zip_path",
-        "exceptions": "exception_report_html_path",       # default: human-readable
-        "exceptions_json": "exception_report_json_path",   # secondary: machine-readable
-    }.get(kind)
-    if key is None or key not in result:
-        abort(404)
-    path = Path(result[key])
-    if not path.exists():
-        abort(404)
-    return send_file(path, as_attachment=True, download_name=path.name)
+app = create_app()
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    print("OpenAI API key stays server-side only - never sent to the browser.")
-    print(f"Open http://127.0.0.1:{port} in your browser.")
+    print(f"Rosetta is running: open http://127.0.0.1:{port}")
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
