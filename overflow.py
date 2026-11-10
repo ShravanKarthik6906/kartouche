@@ -23,12 +23,11 @@ default/isolated-form widths per codepoint would misrepresent the real
 rendered width. HarfBuzz performs the same category of OpenType shaping
 InDesign's own composer does.
 
-Font availability note: this document's actual licensed fonts (Myriad Pro,
-Bunday Sans, Museo Sans) are not installed on this machine (checked
-system fonts, project assets, and Adobe Fonts sync - nothing found, see
-FONT_SUBSTITUTES for the resolution). Per explicit direction, widely
-available system fonts with matching weights are used as the default,
-primary measurement path (not a stopgap) - see FONT_SUBSTITUTES below.
+Font availability note: the licensed commercial fonts a document uses are
+usually not installed on the machine running the pipeline. Openly
+licensed fonts with comparable metrics and matching weights, bundled in
+fonts/, are used as the default, primary measurement path (not a
+stopgap) - see FONT_SUBSTITUTES below.
 Real licensed font files can be dropped in later for exact fidelity; nothing
 here blocks on that. Arabic needs no substitution - translated Arabic runs
 are already rendered in the real, bundled Noto Sans Arabic font (see
@@ -46,10 +45,10 @@ from lxml import etree
 FONTS_ASSET_DIR = Path(__file__).parent / "fonts"
 
 # (font_family, font_style) -> (file_path, font_number | None for a plain
-# .ttf/.otf, or the face index within a .ttc collection). Covers every font
-# actually resolved onto translatable text in the real document (see
-# investigation: Myriad Pro, Museo Sans, Bunday Sans - Arial/Zapf/Wingdings
-# etc. never apply to translatable runs).
+# .ttf/.otf, or the face index within a .ttc collection). Covers the
+# commercial text faces Rosetta has been used with, plus faces whose
+# metrics are matched exactly (Arial) and the bundled fonts themselves.
+# Symbol/dingbat fonts are not listed: they never carry translatable text.
 #
 # Bundled as real files under fonts/ (SIL OFL licensed, see LICENSE_LiberationSans.txt
 # and OFL_Inter.txt) rather than pointing at macOS system font paths - this runs on
@@ -206,7 +205,7 @@ def resolve_font_file(family, font_style, target_language):
                 f"measured with {Path(path).stem}" + (" (no exact weight match, nearest used)" if approx else "") + ".")
         return path, num, True, note
 
-    # Unknown family/style combo not seen in our investigation - fall back to
+    # Unknown family/style combo with no configured substitute - fall back to
     # Liberation Sans Regular rather than crashing, but say so loudly.
     return (str(FONTS_ASSET_DIR / "LiberationSans-Regular.ttf"), None, True,
             f"No substitute configured for '{family} {font_style}' - fell back to Liberation Sans Regular as a last resort.")

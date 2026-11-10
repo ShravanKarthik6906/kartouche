@@ -20,8 +20,8 @@ CREATE TABLE text_runs (
     id INTEGER PRIMARY KEY,
     story_id INTEGER NOT NULL REFERENCES stories(id),
     sequence_index INTEGER NOT NULL,       -- order of this Content within the story (for reconstruction)
-    paragraph_style TEXT,                  -- e.g. "_Family Letter:FL body"
-    character_style TEXT,                  -- e.g. "myriad bold"
+    paragraph_style TEXT,                  -- e.g. "ParagraphStyle/Body"
+    character_style TEXT,                  -- e.g. "CharacterStyle/Bold"
     raw_text TEXT NOT NULL,                -- exact original text, incl. whitespace
     is_table_cell INTEGER DEFAULT 0,       -- 1 if this Content is inside a <Cell>
     table_self_id TEXT,                    -- which table, if applicable

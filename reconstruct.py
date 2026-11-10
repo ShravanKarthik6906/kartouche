@@ -12,8 +12,8 @@ For a given document_id and target_language:
      RightToLeftDirection (Arabic reads right-to-left), and applies a
      local AppliedFont override (see ARABIC_FALLBACK_FONT) to every
      CharacterStyleRange whose Content was actually replaced with
-     Arabic text - the document's own fonts (Bunday Sans, Myriad Pro,
-     etc.) have no Arabic glyphs and render as tofu otherwise. A
+     Arabic text - a typical document's own (Latin-only) fonts have no
+     Arabic glyphs and render as tofu otherwise. A
      matching FontFamily entry is also added to Resources/Fonts.xml so
      the document's own font metadata stays consistent.
   4. Rewrites every LinkResourceURI (in Stories/, Spreads/ and
