@@ -4,18 +4,43 @@ services:
     runtime: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    # --timeout 600: the /upload request extracts the zip synchronously
-    # before handing off to the background pipeline thread - a ~300MB
-    # upload can take a while on the free tier's 0.1 CPU, so the default
-    # 30s gunicorn worker timeout isn't enough.
-    # --workers 1: free tier has 512MB RAM total; one worker avoids
-    # multiplying memory usage. --threads lets status polling stay
-    # responsive while a job runs in its background thread.
-    startCommand: "gunicorn app:app --timeout 600 --workers 1 --threads 4"
+    # --workers 1 is required: jobs run in background threads of the one
+    # worker process, and a job left "running" by another process would be
+    # shown as interrupted. --threads keeps pages and status polling
+    # responsive while jobs run. --timeout 600 leaves time to unpack large
+    # uploads on the free tier's small CPU.
+    startCommand: "gunicorn app:app --timeout 600 --workers 1 --threads 8"
+    healthCheckPath: /healthz
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.7"
+      # Secrets and the access mode are set in the Render dashboard, never here.
       - key: OPENAI_API_KEY
         sync: false
-      - key: SITE_PASSWORD
+      - key: SITE_PASSWORD        # private mode only
+        sync: false
+      - key: PUBLIC_DEMO          # "true" opens the site to everyone, with the limits below
         sync: false
       - key: ROSETTA_OPENAI_MODEL
         value: gpt-5-mini
+      # Public-demo safety limits (see .env.example for what each does).
+      - key: DAILY_SPEND_CAP_USD
+        value: "2"
+      - key: RATE_LIMIT_JOBS_PER_HOUR
+        value: "3"
+      - key: RATE_LIMIT_SAMPLES_PER_HOUR
+        value: "20"
+      - key: MAX_WORDS_PER_JOB
+        value: "2500"
+      - key: MAX_CONCURRENT_JOBS
+        value: "2"
+      - key: MAX_UPLOAD_MB
+        value: "50"
+      - key: JOB_TTL_HOURS
+        value: "24"
+      - key: OPENAI_TIMEOUT_SECONDS
+        value: "90"
+      - key: OPENAI_MAX_RETRIES
+        value: "3"
+      - key: TRANSLATE_CONCURRENCY
+        value: "4"

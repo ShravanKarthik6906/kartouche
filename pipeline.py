@@ -79,7 +79,7 @@ def _redact(text):
 
 class JobRunner:
     def __init__(self, store, job_id, *, job_dir, extracted_dir, idml_filename, langs, client, model,
-                 on_usage, public=False):
+                 on_usage, public=False, is_sample=False):
         self.store = store
         self.job_id = job_id
         self.job_dir = Path(job_dir)
@@ -90,6 +90,7 @@ class JobRunner:
         self.model = model
         self.on_usage = on_usage
         self.public = public
+        self.is_sample = is_sample
         self.db_path = str(self.job_dir / "rosetta.db")
         self.failed = {}          # lang -> error dict
         self.notices = []
@@ -125,6 +126,10 @@ class JobRunner:
 
     def fail_lang(self, lang, exc, stage):
         err = friendly_error(exc, self.public)
+        if self.is_sample and err["code"] == "budget":
+            err["message"] = ("The sample hasn't been prepared in this language yet, and this demo's daily "
+                              "translation budget has been used. Please try again tomorrow, or pick a language "
+                              "that has already been run.")
         self.failed[lang] = err
         self.set_lang(lang, "failed", err)
         self.log(f"{languages.name(lang)} failed during {stage}: {err['detail'].splitlines()[-1] if err['detail'] else ''}")

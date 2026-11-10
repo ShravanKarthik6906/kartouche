@@ -267,7 +267,7 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
 
         runner = JobRunner(store, job_id, job_dir=job_dir, extracted_dir=prepared.extracted_dir,
                            idml_filename=prepared.idml_filename, langs=langs, client=client, model=model,
-                           on_usage=on_usage, public=s.public_demo)
+                           on_usage=on_usage, public=s.public_demo, is_sample=is_sample)
         app.extensions["rosetta"].setdefault("runners", {})[job_id] = runner
 
         def run():
