@@ -1,213 +1,196 @@
-# Rosetta — IDML Live-Text Translation Pipeline
+# Rosetta
 
-Rosetta translates the live text inside an Adobe InDesign `.idml` file
-(paragraphs, table cells, bullet lists) into another language, while
-preserving mixed formatting, fixing the layout problems translation
-introduces, and flagging anything it can't safely resolve on its own for a
-human to review. It ships as both a set of CLI pipeline stages and a small
-Flask web app.
+**Translate Adobe InDesign documents into other languages, with the formatting, layout and right-to-left text taken care of.**
 
-Currently supports Spanish (`es`) and Arabic (`ar`) as target languages.
+Upload an `.idml` file and get back a translated InDesign file you can open straight away, a side-by-side
+preview to check in your browser, and a QA report listing anything that needs a human eye. Spanish, French,
+German, Portuguese and Arabic are supported.
 
-## Why this is harder than "call an API and swap the text"
+**Try it:** the live demo link will go here once public mode is switched on. Until then, run it locally in
+two minutes (see [Quick start](#quick-start)) and click **Try it with a sample lesson**.
 
-- **Mixed formatting mid-sentence.** A single sentence can span several
-  `<Content>` XML fragments with different bold/italic runs. Rosetta
-  reassembles the full sentence with numbered tags around each fragment so
-  the model has real grammatical context, then maps the translation back
-  onto the original fragment boundaries.
-- **Arabic is right-to-left.** Reconstruction flips every `StoryDirection`
-  attribute, applies a bundled Arabic-capable font (the document's own fonts
-  have no Arabic glyphs and would render as tofu otherwise), and rewrites
-  the document's font metadata to match.
-- **Translated text doesn't fit the original frame.** Spanish and Arabic
-  text is routinely longer than the English original. Rosetta measures
-  real text width using actual font metrics and HarfBuzz text shaping
-  (not a character-count guess - this matters especially for Arabic's
-  contextual letterforms) against the real frame geometry parsed from the
-  IDML's own `Spreads` XML, then resolves overflow in tiers: try wrapping
-  onto another line, then a controlled font-size reduction, then a real
-  API call asking for a shorter phrasing that preserves meaning - and if
-  none of that genuinely fits, it flags the fragment instead of silently
-  producing broken layout.
-- **The document's real fonts usually aren't available on the machine
-  running the pipeline.** Licensed commercial fonts (e.g. Myriad Pro, Museo
-  Sans) are substituted with metric-reasonable, open-licensed equivalents
-  (Liberation Sans, Inter) bundled in `fonts/`, so measurement works
-  identically on any machine, including on a cloud host.
-- **Translation can silently go wrong.** A QA pass cross-checks for
-  inconsistent translations of repeated text, missing translations, and
-  layout-risk heuristics, and produces a plain-English HTML report plus a
-  machine-readable JSON one per language.
+![Rosetta home page: upload card, language chips and a one-click sample](docs/screenshots/home.png)
 
-## Architecture
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/progress.png" alt="Progress page with a step-by-step checklist and time estimate"></td>
+<td width="50%"><img src="docs/screenshots/results.png" alt="Results page: summary, downloads and side-by-side preview"></td>
+</tr>
+<tr>
+<td>Live progress, step by step</td>
+<td>Results: summary, downloads and a side-by-side preview<br><sub>Illustrative: the Spanish in this screenshot was written by hand to show the layout. Run the sample to see live model output.</sub></td>
+</tr>
+</table>
 
-```
-  input: .idml + Links/ folder, zipped
-         |
-         v
-  [ Flask web app (app.py) ] -- uploads the zip, runs the pipeline below
-         |                      in a background thread, reports progress
-         v
-  1. Deconstruct          (deconstruct.py)
-     unzip .idml -> parse every Stories/*.xml -> store each text
-     fragment + its style into SQLite (rosetta.db)
-         |
-         v
-  2. Story placements     (story_placements.py)
-     map each story to the page/frame it's actually placed on,
-     by parsing the IDML's Spreads XML
-         |
-         v
-  3. Translate            (translate.py)                [real OpenAI calls]
-     rebuild each full sentence with tagged fragments, translate with
-     full grammatical context, map the result back onto fragments
-         |
-         v
-  3b. Overflow check      (overflow.py, overflow_resolve.py)
-      measure real fit (HarfBuzz shaping + real frame geometry)
-        -> wrap onto another line
-        -> controlled font-size shrink
-        -> retranslate for a shorter phrasing     [real OpenAI call]
-        -> flag for human review if still too long
-         |
-         v
-  4. Reconstruct          (reconstruct.py)
-     write translations back into a fresh copy of the IDML, flip
-     StoryDirection + apply Arabic font for RTL, rewrite linked asset
-     paths, re-zip into a valid .idml + delivery bundle
-         |
-         v
-  5. Exception checks     (exception_checks.py)
-     cross-check inconsistent/missing translations + layout-risk
-     heuristics -> HTML + JSON QA report per language
-         |
-         v
-  output: translated .idml + delivery bundle + QA report
-```
+## What it does
 
-Every stage reads/writes the same SQLite database (`rosetta.db`), so each
-one can also be run and inspected independently from the CLI.
+- **Keeps the formatting.** A sentence often spans several differently styled runs (a **bold** word, an
+  *italic* phrase). Rosetta translates the whole sentence at once, with numbered tags around each run, so the
+  grammar is right and the styling lands on the right words. Numbers and punctuation are never sent to the model.
+- **Fits the layout.** Translations usually run 20-35% longer than English. Rosetta measures the translated
+  text with real font metrics (HarfBuzz shaping) against each frame's real geometry from the IDML. When text
+  doesn't fit, it re-wraps it, then tries a small, controlled font-size reduction, then asks the model for a
+  shorter wording. If none of that works, it flags the text for a person instead of leaving a broken layout.
+- **Handles right-to-left.** Arabic stories are flipped to right-to-left and set in Noto Sans Arabic, which is
+  packaged with the output so it renders in InDesign without any setup.
+- **Checks its own work.** The QA report lists anything untranslated, translated inconsistently, shortened to
+  fit, or still too long, with the page it's on.
+- **Shows you the result without InDesign.** The preview puts original and translation side by side, page by
+  page, with bold/italic, tables and lists, and highlights what needs review.
 
-## Setup
+## Quick start
 
-Developed and tested on Python 3.13.7.
+Needs Python 3.11+ (developed on 3.13).
 
 ```bash
 git clone https://github.com/ShravanKarthik6906/rosetta-translator.git
 cd rosetta-translator
 python3 -m venv .venv
-source .venv/bin/activate        # or .venv\Scripts\activate on Windows
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
-# then edit .env and set OPENAI_API_KEY to a real key
-```
-
-## Running it
-
-### Option A — the web app
-
-```bash
+cp .env.example .env                 # then put your OpenAI key in OPENAI_API_KEY
 python app.py
 ```
 
-Open `http://127.0.0.1:5050`. Upload a `.zip` containing exactly one
-`.idml` file and a `Links` folder alongside it, pick target language(s),
-and watch the pipeline run with live progress. When it finishes you can
-download the translated delivery bundle and the exception/QA report for
-each language.
+Open <http://127.0.0.1:5050>. Click **Try it with a sample lesson**, or upload your own file.
 
-Every upload makes real, billed OpenAI API calls. Set `SITE_PASSWORD` in
-`.env` before exposing this publicly.
+**What to upload:** an `.idml` file (in InDesign, *File › Export… › InDesign Markup (IDML)*), or a `.zip`
+containing one `.idml` and, optionally, its `Links` folder (an InDesign *Package* folder, zipped, works). The
+Links folder is only needed if you want the images bundled with the result; text is translated either way.
 
-### Option B — CLI, stage by stage
+The sample lesson is in [`samples/`](samples/). It's an original 3-page grade-4 lesson on equivalent fractions,
+generated by [`samples/make_sample.py`](samples/make_sample.py). Download it from the app's home page to
+inspect it.
 
-Useful for debugging a single stage or scoping a test to a few paragraphs
-without spending on a full real API run.
+### Running the tests
 
 ```bash
-# unzip the .idml (it's just a zip file) alongside its Links/ folder first
-mkdir idml_extracted && unzip YourFile.idml -d idml_extracted/
-
-python3 deconstruct.py idml_extracted/ YourFile.idml rosetta.db
-python3 story_placements.py rosetta.db 1 idml_extracted/
-python3 translate.py rosetta.db 1 --dry-run        # no API calls, sanity check
-python3 translate.py rosetta.db 1 --langs=es,ar    # real, billed API calls
-python3 overflow_resolve.py rosetta.db 1 idml_extracted/ es,ar
-python3 reconstruct.py rosetta.db 1 es idml_extracted/ idml_work_copy_es
-python3 exception_checks.py rosetta.db 1 es,ar
+pip install -r requirements-dev.txt
+pytest
 ```
 
-`translate.py` also supports `--limit=N`, `--story-id=N`, and
-`--paragraph-seq=N` to scope a run tightly while testing, since re-running
-it is a real, non-deterministic, billed API call each time.
+The suite has 76 tests and needs no API key, because OpenAI is replaced by a local fake. It runs the
+whole pipeline on the sample in all five languages and checks the output files. GitHub Actions runs it on
+every push.
+
+## Deploying
+
+`render.yaml` deploys to [Render](https://render.com) as a single web service (gunicorn, **one** worker,
+because jobs run in background threads of that worker). Set `OPENAI_API_KEY` in the Render dashboard, then choose a mode:
+
+- **Private** (default): set `SITE_PASSWORD` and every visitor needs it (HTTP Basic Auth, any username).
+- **Public demo**: set `PUBLIC_DEMO=true`. There's no password, and these limits switch on: a few documents per visitor per hour,
+  a word limit per document, a cap on concurrent jobs, and a **daily spending cap**. When the cap is reached,
+  uploads pause with a friendly message and the sample keeps working. Also set a hard monthly budget in the
+  OpenAI dashboard; the in-app cap resets if the server's disk is wiped (see limitations).
+
+To make the sample free on the live site, run `python scripts/warm_sample_cache.py` once locally (about
+$0.05-0.10 of real API calls with gpt-5-mini) and commit `samples/translation_cache.json`. The app answers
+sample runs from that file instead of calling the API.
+
+### Settings
+
+All settings are environment variables (or `.env`), documented in [`.env.example`](.env.example):
+
+| Variable | Default | What it does |
+|---|---|---|
+| `OPENAI_API_KEY` | (none) | Required to translate your own files. |
+| `ROSETTA_OPENAI_MODEL` | `gpt-4o` | Translation model (`gpt-5-mini` on Render). |
+| `SITE_PASSWORD` | (none) | Private mode password. Ignored in public mode. |
+| `PUBLIC_DEMO` | `false` | Open access with the limits below. |
+| `DAILY_SPEND_CAP_USD` | `2` (public) | Max OpenAI spend per UTC day. |
+| `RATE_LIMIT_JOBS_PER_HOUR` | `3` (public) | Uploads per visitor per hour. |
+| `RATE_LIMIT_SAMPLES_PER_HOUR` | `20` (public) | Sample runs per visitor per hour. |
+| `MAX_WORDS_PER_JOB` | `2500` (public) | Largest document accepted. |
+| `MAX_CONCURRENT_JOBS` | `2` public / `4` | Jobs running at once. |
+| `MAX_UPLOAD_MB` | `50` | Upload size limit. |
+| `JOB_TTL_HOURS` | `24` | Files and results are deleted after this. |
+| `OPENAI_TIMEOUT_SECONDS` / `OPENAI_MAX_RETRIES` | `90` / `3` | Per-request timeout and automatic retries. |
+| `TRANSLATE_CONCURRENCY` | `4` | Paragraphs translated in parallel. |
+| `ROSETTA_DATA_DIR` | `./webapp_jobs` | Where jobs and app state are stored. |
+
+In private mode the limits default to off (`0`), but any of them can be set explicitly.
+
+## Architecture
+
+```
+  .idml, or .zip with .idml + Links/
+         |
+         v
+  [ web app: app.py ]  validate upload (uploads.py), start a background job (pipeline.py),
+         |             persist job state (jobs.py), enforce demo limits (limits.py)
+         v
+  1. Read                 deconstruct.py      every <Content> fragment + style -> SQLite (rosetta.db)
+  2. Find text on pages   story_placements.py map stories to pages/frames from Spreads XML
+  3. Translate            translate.py        tagged whole-sentence translation      [OpenAI]
+  4. Fit to the layout    overflow.py         measure (HarfBuzz + real frame geometry)
+                          overflow_resolve.py   -> wrap -> shrink -> shorten         [OpenAI]
+                                                -> flag for review
+  5. Quality checks       exception_checks.py consistency / completeness / length
+                          reports.py          HTML + JSON QA report per language
+  6. Build the file       reconstruct.py      write translations into a copy of the IDML, flip RTL,
+                                              apply script fonts, relative links, re-zip (+ package)
+                          preview.py          side-by-side preview data for the browser
+         |
+         v
+  translated .idml + InDesign package (.idml, Links, fonts) + QA report + preview
+```
+
+Supporting modules: `languages.py` (the single list of languages: names, direction, fonts), `llm.py`
+(OpenAI client with timeouts and retries, the spending guard, the sample cache, plain-language error
+messages), `config.py` (settings), `state.py` (app state database), `idml_check.py` (structural IDML
+validator, also a CLI).
+
+Every stage reads and writes the same `rosetta.db`, so each can also be run on its own from the command line:
+
+```bash
+mkdir idml_extracted && unzip YourFile.idml -d idml_extracted/
+python deconstruct.py idml_extracted/ YourFile.idml rosetta.db
+python story_placements.py rosetta.db 1 idml_extracted/
+python translate.py rosetta.db 1 --dry-run                # no API calls
+python translate.py rosetta.db 1 --langs=es,ar            # real, billed calls
+python overflow_resolve.py rosetta.db 1 idml_extracted/ es,ar
+python exception_checks.py rosetta.db 1 es,ar
+python reconstruct.py rosetta.db 1 es idml_extracted/ idml_work_copy_es
+python idml_check.py idml_work_copy_es/../YourFile_es.idml
+```
+
+`translate.py` also takes `--limit=N`, `--story-id=N` and `--paragraph-seq=N` to test on a few paragraphs.
+
+### Adding a language
+
+Add one entry to `LANGUAGES` in [`languages.py`](languages.py), then add a line of that language's special
+characters to `tests/test_languages.py`, which checks that the bundled fonts cover them. Scripts the
+document's own fonts can't show (as with Arabic) need a `font` and its files in `fonts/`.
 
 ## Known limitations
 
-This is an honest list, not a disclaimer - please read it before relying on
-this for anything important:
+An honest list. Please read it before relying on Rosetta for anything important.
 
-- Tested end-to-end on one real document, in two target languages (Spanish
-  and Arabic). It has not been validated against a broad range of InDesign
-  documents, and it does not claim to handle arbitrary IDML files out of
-  the box.
-- A small number of overflow cases cannot be resolved automatically (fit
-  check still fails after wrapping, shrinking, and a retranslate-for-brevity
-  attempt) and are flagged in the exception report for manual frame
-  resizing rather than silently left broken.
-- Overflow measurement for Spanish (and any other Latin-script target)
-  uses substitute fonts (Liberation Sans / Inter), not the document's
-  actual licensed fonts, since those usually aren't available on the
-  machine running the pipeline. This is metric-reasonable but not
-  pixel-exact.
-- Page/frame mapping (`story_placements.py`) only covers stories that are
-  placed directly on a spread; stories that live only on a master page
-  (e.g. running headers/footers that repeat per page) aren't currently
-  mapped to a specific frame.
-- Any fragment resolved via tier-4 "retranslate for brevity" changes actual
-  wording, not just layout, so it's always routed to the exception report
-  for human review rather than treated as final.
-- Translations are machine-generated and have not been reviewed by native
-  speakers. The QA exception report checks consistency and completeness
-  (repeated text translated the same way, nothing missing, layout risk) -
-  it does not check linguistic correctness.
-- Document text is sent to OpenAI's API for translation. Don't upload
-  confidential documents unless that's acceptable for your use case.
-- There is no automated test suite yet.
+- **Translations are machine-generated.** The QA report checks completeness, consistency and fit, not
+  linguistic quality. Have a fluent speaker review before publishing.
+- **Your text goes to OpenAI.** Don't upload confidential documents unless that's acceptable to you.
+- **Tested on a limited set of documents.** It has been tested end to end on one real production document
+  and the bundled sample. Unusual InDesign features (anchored objects, footnotes, text on paths, complex nested
+  tables) may not be handled. Story placement covers frames placed on spreads; text that only lives on master
+  pages (running heads, footers) is translated but not measured for fit.
+- **Fit is measured per text fragment, with substitute fonts.** Licensed fonts such as Myriad Pro aren't
+  available on the server, so Latin text is measured with metric-similar open fonts (exact for Arial, close
+  for others). InDesign's own line breaking can still differ slightly, so check the flagged items.
+- **Some overflow can't be fixed automatically.** It's flagged in the preview and the QA report for you to
+  resize the frame. Shortened-to-fit wording is always flagged for review because it changes the text.
+- **Arabic and Latin digits.** Noto Sans Arabic has no Latin letters or Western digits. Arabic runs that
+  contain them may show missing glyphs in InDesign until you apply a font that has both. Paragraph-level
+  direction and table direction aren't flipped, only story direction.
+- **The public demo's daily spending cap is stored on the server's local disk.** On hosts with ephemeral disks
+  (like Render's free tier) it resets when the server restarts, so the hard monthly limit in the OpenAI
+  dashboard is the real backstop.
+- **Jobs run inside the web process.** A restart interrupts running jobs (they're shown as interrupted, not
+  lost), and the app must run with a single worker.
+- **The prompt assumes educational material.** It describes the text as a K-12 math worksheet, which suits
+  the documents Rosetta was built for. Other kinds of documents still translate well, but the prompt could
+  be made configurable.
 
-## Pipeline stages in detail
+## License
 
-1. **Deconstruct** (`deconstruct.py`) — unzips the IDML, parses every
-   `Stories/*.xml` file, and stores every `<Content>` text fragment into
-   SQLite, preserving order, paragraph/character style, table-cell
-   position, and which fragments belong to the same sentence
-   (`paragraph_seq`).
-2. **Story placements** (`story_placements.py`) — maps each story to the
-   page/frame it's actually placed in, by parsing the IDML's `Spreads`
-   XML, so overflow checking later knows the real frame geometry for each
-   fragment.
-3. **Translate** (`translate.py`) — rebuilds each full sentence with
-   numbered tags around translatable fragments and sends it to OpenAI with
-   full grammatical context, letting the model reorder tags where the
-   target language's grammar requires it (important for Arabic). Numbers
-   and blank fragments are never sent to the model - they're preserved
-   exactly as fixed anchor text.
-4. **Overflow check** (`overflow.py` / `overflow_resolve.py`) — for every
-   translated fragment, measures whether it actually fits its real frame
-   using HarfBuzz text shaping over real font metrics, then resolves
-   overflow in tiers: wrap onto another line → controlled font-size
-   reduction → a real API call for a shorter phrasing → flag for human
-   review if none of that genuinely fits.
-5. **Reconstruct** (`reconstruct.py`) — writes translations back into a
-   fresh copy of the IDML's `Stories/*.xml`, flips `StoryDirection` to RTL
-   and applies the bundled Arabic font for Arabic output, rewrites linked
-   asset paths to be portable across machines, and re-zips into a valid
-   `.idml` plus a delivery bundle.
-6. **Exception checks** (`exception_checks.py`) — cross-checks for
-   inconsistent translations of repeated text, missing translations, and
-   layout-risk heuristics, producing a plain-English HTML report and a
-   machine-readable JSON one per language.
-
-`app.py` is a thin Flask wrapper around all of the above - it doesn't
-reimplement any pipeline logic, just runs the existing functions in a
-background thread and reports progress.
+[MIT](LICENSE). Bundled fonts are licensed separately under the SIL Open Font License (see `fonts/`).

@@ -124,7 +124,7 @@
       const usd = job.cost.usd;
       const cached = job.is_sample && !u.calls;
       return { value: usd < 0.01 && usd > 0 ? "<$0.01" : "$" + usd.toFixed(2),
-               note: cached ? "Sample results are cached, so this run was free" : "Whole job, all languages" };
+               note: cached ? "Sample results are cached, so this run was free" : (job.langs.length > 1 ? "Whole job, all languages" : "Whole job") };
     }
     return { value: "—", note: "Cost not available for this model" };
   }
