@@ -1,0 +1,702 @@
+{
+"0046ea382ea4140ca57d05e356bf7c6499ea01e8d62073383e84be772da7becc": {
+"content": "<t18>Erkläre deine Überlegungen mit Worten, Bildern und Zahlen.</t18>",
+"model": "gpt-5-mini"
+},
+"0395498da08769bd72660a4d05818c3d9d06e5a54f6fee817bd65ad945902ab0": {
+"content": "<t51>Le </t51><t52>dénominateur</t52><t53> est le nombre du bas. Il indique combien de parts égales constituent un tout.</t53>",
+"model": "gpt-5-mini"
+},
+"0503f3eed9ea65ffce58ad1e489f5d391ba7bcca3aa8f3708914f2368f9e1e38": {
+"content": "<t75>Escribe una fracción equivalente a </t75>3/5.",
+"model": "gpt-5-mini"
+},
+"078898e946d003492cc368643121c3c755044d2df6719714617a41f158bd8370": {
+"content": "<t83>ارسم خط الأعداد من </t83>0<t85>إلى </t85>1<t87>. ضع علامة على </t87>1/2<t89> وكسر آخر مساوٍ له.</t89>",
+"model": "gpt-5-mini"
+},
+"07ebb72aecd48726d1af9cbe1a7367e727ad3434c37ab6ad1736a073c1880cad": {
+"content": "<t90>تحدي</t90>",
+"model": "gpt-5-mini"
+},
+"086081da9aec3a4e5c7f98e812c6e0a9b435b7a67156f526d39ccfae3c561cdf": {
+"content": "<t78>Maya dice que </t78>2/6<t80> y </t80>1/3<t82> son equivalentes. ¿Tiene ella razón? Explica cómo lo sabes.</t82>",
+"model": "gpt-5-mini"
+},
+"0965b1224744b8433af8b7801ae87db907b53d75182e9788023900b54ec51e2f": {
+"content": "<t47>تذكّر</t47>",
+"model": "gpt-5-mini"
+},
+"0ad682d645596856ae577504e3aafaff393f650e1dfdfb212604efb079e4b845": {
+"content": "<t13>في هذا الدرس سوف:</t13>",
+"model": "gpt-5-mini"
+},
+"0af03c399207c65d9033a704150e16a93f3429286548f1e1369a1be199e71424": {
+"content": "<t90>Desafío</t90>",
+"model": "gpt-5-mini"
+},
+"0b2a25d740ec2d384f26a7a49829334f1dbe80818d8b6be9da108a2851ecd1bc": {
+"content": "<t27>En palabras</t27>",
+"model": "gpt-5-mini"
+},
+"0d036877af093ddde08db9b37c3ed71ba4f23968968282d265cf27c13cd37094": {
+"content": "<t23>Repérez le motif dans le tableau ci-dessous.</t23>",
+"model": "gpt-5-mini"
+},
+"0d43ffffb3c265a05ec4d0384eb06beea10239898e96dd4185a0da3d21026351": {
+"content": "<t23>Procure o padrão na tabela abaixo.</t23>",
+"model": "gpt-5-mini"
+},
+"10914452678bb0a505be864b25e55546a7b035c0ff82fb39a9ba324d5fcdf4c0": {
+"content": "<t13>Nesta lição, você vai:</t13>",
+"model": "gpt-5-mini"
+},
+"138626d390713ccd7ec6d8cb47e7da3184f63ae7cb2e5b2f06f641af5c7c1729": {
+"content": "<t26>Äquivalent</t26>",
+"model": "gpt-5-mini"
+},
+"14f244022cb42f4c9da2e97572f2db1a4b98a4d72aebeb3e84e0c89f878459df": {
+"content": "<t90>Défi</t90>",
+"model": "gpt-5-mini"
+},
+"17985dbb3e48ceafc3888c7f3ea2ca4bd9c57d5ce3b180e4b2cdd204a328424f": {
+"content": "<t39>Tres cuartos es lo mismo que seis octavos.</t39>",
+"model": "gpt-5-mini"
+},
+"17e53fbd954d495ad1b9169547cce813ded72abe88def1f192b3ede994c2fc49": {
+"content": "<t26>متكافئ</t26>",
+"model": "gpt-5-mini"
+},
+"1a7709517f2bf24febbd4cf238be2a5efd5b8bc39eccc20127a57c26c908dbf7": {
+"content": "<t91>Trouve</t91><t92>trois</t92><t93>fractions équivalentes à</t93>2/3<t95>. Utilise le modèle du tableau pour t'aider.</t95>",
+"model": "gpt-5-mini"
+},
+"1b173b5cbd983dd2409546839bdf426e04d362dcae000d607537e9a8be19b8c1": {
+"content": "<t26>Équivalent</t26>",
+"model": "gpt-5-mini"
+},
+"1c0032adc246f0094480750c7badb2687c411cc7a956ddfa78da675c11ae6f26": {
+"content": "<t51>El</t51><t52>denominador</t52><t53>es el número inferior. Indica cuántas partes iguales forman un todo.</t53>",
+"model": "gpt-5-mini"
+},
+"22d6b1337a1abe0eeccc120466800cbf0a5a2f114e16ee0924b1f98c5be7ab77": {
+"content": "<t83>Desenhe uma reta numérica de </t83>0<t85>até </t85>1<t87>. Marque </t87>1/2<t89> e outra fração equivalente a ela.</t89>",
+"model": "gpt-5-mini"
+},
+"23176af906047d7dbf939512419ebd771050bdee3fcc5dd9f4e4a6078b060a7c": {
+"content": "<t19>Äquivalente Brüche finden</t19>",
+"model": "gpt-5-mini"
+},
+"2372c5f323779ee1b75006292c7d14c7f196a1590c6e2a2205b8045477ba053d": {
+"content": "<t83>Trace une droite graduée de </t83>0<t85> à </t85>1<t87>. Marque </t87>1/2<t89> et une autre fraction qui lui est égale.</t89>",
+"model": "gpt-5-mini"
+},
+"2448be507a3a32b4658d08c3034210399af80bf4a706f02826f221d22212b6be": {
+"content": "<t75>Schreibe einen Bruch, der äquivalent ist zu</t75>3/5.",
+"model": "gpt-5-mini"
+},
+"26ad2853a34803123a8a266156f666215bfecc7026b556b79e595e132da8f82b": {
+"content": "<t20>Um einen gleichwertigen Bruch zu bilden, multipliziere die obere Zahl und die untere Zahl mit der </t20><t21>gleichen </t21><t22>Zahl. Der Bruch sieht anders aus, aber sein Wert ändert sich nicht.</t22>",
+"model": "gpt-5-mini"
+},
+"26c3a71bbd01262012c213d28f6018a733a5babe3001ebda718e383b8fba5736": {
+"content": "<t75>اكتب كسرًا مكافئًا لـ </t75>3/5.",
+"model": "gpt-5-mini"
+},
+"29d88771d7a195527fe8bf3ff6c5e8003b75b06e34b5bf556c5b8d01311cfeef": {
+"content": "<t54>Figura 1.</t54><t55>Três barras de fração. As partes sombreadas têm o mesmo tamanho.</t55>",
+"model": "gpt-5-mini"
+},
+"2a2cd3eac29668ee05e633c8d031446c2f5ce1a1f8ed2c6e65a48d9560248638": {
+"content": "<t70>Sombreie uma barra de fração para mostrar</t70>2/3<t72>. Em seguida, sombreie uma segunda barra para mostrar</t72>4/6<t74>. O que você percebe?</t74>",
+"model": "gpt-5-mini"
+},
+"2aaa067375d10d1ef0f9f34bda140258a962edaa02d9b712188b82c7aa7264b0": {
+"content": "<t1>Matemáticas de 4.º grado · Unidad de fracciones · Lección 7</t1>",
+"model": "gpt-5-mini"
+},
+"2e668fd296436f5637dd5f459660271fee9c7b0383c1b5bd0a15c092458e55e3": {
+"content": "<t14>Use barras de frações para ver quando duas frações são equivalentes.</t14>",
+"model": "gpt-5-mini"
+},
+"30084be35960099737672fefa0babeb560a6f60e2e4b62a2764aaf709fcfd356": {
+"content": "<t48>ال</t48><t49>بسط</t49><t50> هو العدد العلوي. يخبرك كم عدد الأجزاء التي لديك.</t50>",
+"model": "gpt-5-mini"
+},
+"320b8f25d458bc0e84280fd4b01112ad6aa7530a5a9c07c0498bb7f102c3df12": {
+"content": "<t18>Explique ton raisonnement avec des mots, des dessins et des nombres.</t18>",
+"model": "gpt-5-mini"
+},
+"36528c299068f1b18ccc730182911a9eb4e2ee7a42a57478ea92c830c5b0fdfd": {
+"content": "<t70>Schraffiere einen Bruchstreifen, um </t70>2/3<t72>. Schraffiere dann einen zweiten Bruchstreifen, um </t72>4/6<t74> Was fällt dir auf?</t74>",
+"model": "gpt-5-mini"
+},
+"36658d06ca67907e4895a07950224ff199d2a297e38cf0c0874414e5cb027e24": {
+"content": "<t64>تمارين</t64>",
+"model": "gpt-5-mini"
+},
+"38903f4998ce9a6a7b6d8a8b20c2d30a4f45c8161f6230393f75d530a3a147db": {
+"content": "<t2>Äquivalente Brüche</t2>",
+"model": "gpt-5-mini"
+},
+"38d3b474884a20c98a04e4b7729a2d413a8efdde62fca8a0d5963236098f450e": {
+"content": "<t18>Explique seu raciocínio com palavras, desenhos e números.</t18>",
+"model": "gpt-5-mini"
+},
+"3bf6a4d18e5937cd1ab8e5c25ace76e1a7b1606fcc538d5445dcbfb053caca06": {
+"content": "<t47>Recuerda</t47>",
+"model": "gpt-5-mini"
+},
+"3c58c6e4b3b12ea5460511d8c3abfdc080ef3fab2d29946ae91a91cb52287ad4": {
+"content": "<t43>Dos quintos es igual a ocho veinteavos.</t43>",
+"model": "gpt-5-mini"
+},
+"3d060eaca5e82a6a107e8198326c6dcdbbfde541067c49b3d2c3d5bbdbf4d8ef": {
+"content": "<t54>Figura 1.</t54><t55>Tres barras de fracciones. Las partes sombreadas tienen el mismo tamaño.</t55>",
+"model": "gpt-5-mini"
+},
+"41c36c85b8e7d360b929ff7e09598bd8991988616238a2d0b7d0225a48ec4128": {
+"content": "<t3>تخيل أن لك ولصديقك كلٌّ منهما شطيرة بنفس الحجم. تقطع شطيرتك إلى</t3><t4>جزئين متساويين</t4><t5>وتأكل جزءًا واحدًا. يقسم صديقك شطيرته إلى</t5><t6>أربعة أجزاء متساوية</t6><t7>ويأكل اثنين من الأجزاء. من أكل أكثر؟</t7>",
+"model": "gpt-5-mini"
+},
+"421fc545285f224bce3f1865bcba8b7d855df2ac3684e603ea8a7f79a42fb376": {
+"content": "<t54>Figure 1.</t54><t55>Trois barres de fractions. Les parties ombrées ont la même taille.</t55>",
+"model": "gpt-5-mini"
+},
+"431efe843188859eb9e92bc1d62d8e45dbffb1e1f5a258808137bb417d2cae0a": {
+"content": "<t39>Drei Viertel sind gleich sechs Achtel.</t39>",
+"model": "gpt-5-mini"
+},
+"44c8aa91d52d2ebc2f5dcb7359ae4f1071c5b5cd68ac2a1a809c0096b4be5162": {
+"content": "<t56>الشكل 2.</t56><t57>الكسور</t57>1/2, 2/4<t61>و</t61>4/8<t63>جميعها تقع عند نفس النقطة على خط الأعداد.</t63>",
+"model": "gpt-5-mini"
+},
+"44ce881fb059850780cf24def137fdd99681d1016a925c2fc205ec4cc6dbc6ef": {
+"content": "<t48>Der</t48><t49>Zähler</t49><t50>ist die obere Zahl. Er gibt an, wie viele Teile du hast.</t50>",
+"model": "gpt-5-mini"
+},
+"454762fd14df0eb9dfec5d859277e1a09358e1796d52b3f621c545c3513b46fe": {
+"content": "<t31>Ein Halb ist dasselbe wie zwei Viertel.</t31>",
+"model": "gpt-5-mini"
+},
+"45d77276bc3f5d7596cfd00f4f1c2297f364267b44cd04553771694f3943102b": {
+"content": "<t65>Répondez à chaque question. Montrez votre travail avec un </t65><t66>dessin </t66><t67>ou un </t67><t68>énoncé numérique</t68>.",
+"model": "gpt-5-mini"
+},
+"4a877e81f50c5ecfbfb8d4deb13e53667881839528c34e08bec09558e7f8c781": {
+"content": "<t14>Verwende Bruchstreifen, um zu sehen, wann zwei Brüche gleich sind.</t14>",
+"model": "gpt-5-mini"
+},
+"4f3e2ad51a2d1b0425ad61cd4bd7c3ad74db279527dd1ba15157e508fb5d7e3a": {
+"content": "<t51>Der</t51><t52>Nenner</t52><t53>ist die untere Zahl. Er gibt an, wie viele gleich große Teile ein Ganzes ergeben.</t53>",
+"model": "gpt-5-mini"
+},
+"4fa3c48684a241279bbe8e00de320b98bee7f0328e761ee2b5df6fc552e804a0": {
+"content": "<t3>Imagina que tú y un amigo tienen cada uno un sándwich del mismo tamaño. Tú cortas el tuyo en</t3><t4>2 partes iguales</t4><t5>y te comes una parte. Tu amigo corta el suyo en</t5><t6>4 partes iguales</t6><t7>y come dos de ellas. ¿Quién comió más?</t7>",
+"model": "gpt-5-mini"
+},
+"51711dcb30e2be66376185872c8da1bace8c1ea85436d2ec0b796cf013f93f78": {
+"content": "<t91>Encontre</t91><t92>três</t92><t93>frações equivalentes a</t93>2/3<t95>. Use o padrão da tabela para ajudá-lo.</t95>",
+"model": "gpt-5-mini"
+},
+"52d7fb5e0bcb6bf970799739a4e63116298ed5faec783cf6abc4bb4eec0df660": {
+"content": "<t13>Dans cette leçon, vous allez :</t13>",
+"model": "gpt-5-mini"
+},
+"53c8e61e4ab52957a1efb903191e3d105828fb00e587a60a34b47cbe77208be4": {
+"content": "<t70>ظلّل شريط الكسر لإظهار</t70>2/3<t72>. ثم ظلّل شريطًا ثانيًا لإظهار</t72>4/6<t74>. ماذا تلاحظ؟</t74>",
+"model": "gpt-5-mini"
+},
+"5571832e5675714a0d03eb92345feeedd9399f7866749c76a7c4d4c6083699a3": {
+"content": "<t8>Keiner von euch! Ihr habt beide</t8><t9>die Hälfte</t9><t10>eines Sandwiches. Brüche, die denselben Anteil bezeichnen, nennt man</t10><t11>äquivalente Brüche</t11>.",
+"model": "gpt-5-mini"
+},
+"55f99e757b21d98df06c1ab320d8b7eeccddf9e5e28a46c11a966851306a8699": {
+"content": "<t91>أوجد</t91><t92>ثلاثة</t92><t93>كسور مكافئة لـ</t93>2/3<t95>. استخدم النمط الموجود في الجدول لمساعدتك.</t95>",
+"model": "gpt-5-mini"
+},
+"5a1467fdc34d3bf6020bf1955dc88f53647f1803e3fb0e747c7a315b3071a8fe": {
+"content": "<t64>Prática</t64>",
+"model": "gpt-5-mini"
+},
+"5a1cf839fb035deead928a683d9c56e12f1b4a01d7654408298f9685e344e976": {
+"content": "<t70>Sombrea una barra de fracción para mostrar</t70>2/3<t72>. Luego, sombrea una segunda barra para mostrar</t72>4/6<t74>. ¿Qué observas?</t74>",
+"model": "gpt-5-mini"
+},
+"5ac274235d597c8c82b0d779e43a448ca6f03ed330a15eb795ab6b832cbf4278": {
+"content": "<t54>Abbildung 1.</t54><t55>Drei Bruchstreifen. Die schattierten Teile sind gleich groß.</t55>",
+"model": "gpt-5-mini"
+},
+"5b00bdad7147bd4f1de6894bb00b644701a8185e2f9cbe746652decb3e6c509c": {
+"content": "<t8>Ni l'un ni l'autre ! Vous avez tous les deux mangé</t8><t9>la moitié</t9><t10>d'un sandwich. Les fractions qui représentent la même quantité sont appelées</t10><t11>fractions équivalentes</t11>",
+"model": "gpt-5-mini"
+},
+"5cc04033d97ae42e572e120b14d1ef9071b9421142435e48ba86df7cd03699a7": {
+"content": "<t31>La mitad es igual a dos cuartos.</t31>",
+"model": "gpt-5-mini"
+},
+"5d28ce4740842c88b09b8cab024df5dde6e5ab1d849db134e16c48520b2139a1": {
+"content": "<t35>الثلث يساوي ثلاثة أجزاء من تسعة.</t35>",
+"model": "gpt-5-mini"
+},
+"5db289b21b400c980d2b10f782da402c40b7dd3321ba4f8cd5852691b3fde5f7": {
+"content": "<t96>Tipp:</t96><t97>mit 2 multiplizieren, dann mit 3, dann mit 4.</t97>",
+"model": "gpt-5-mini"
+},
+"5e455efa0e35f53e895c39e2e585990745da0cc3b68d1d47199202f053815902": {
+"content": "<t96>تلميح:</t96><t97>اضرب في 2، ثم في 3، ثم في 4.</t97>",
+"model": "gpt-5-mini"
+},
+"5e7b631fef00961eff0b153280d8245b3aad1cfa81944d3098af5d9772e17600": {
+"content": "<t2>Frações equivalentes</t2>",
+"model": "gpt-5-mini"
+},
+"5f4a828baecc337b102daf2efd43a080828622f8aeb1403f262a64a74a5e598b": {
+"content": "<t44>Você também pode conferir seu trabalho em uma </t44><t45>reta numérica</t45><t46>. Frações equivalentes sempre caem exatamente no mesmo ponto.</t46>",
+"model": "gpt-5-mini"
+},
+"614975572bd9a5b4c8a5282c83c8373c708bf9373f7b7443e6d6fbd2da88bbaf": {
+"content": "<t35>Um terço é igual a três nonos.</t35>",
+"model": "gpt-5-mini"
+},
+"642e7df70cec6529e83f54934891e50b97c1f89158eac61714d401df4f417ef3": {
+"content": "<t2>Fractions équivalentes</t2>",
+"model": "gpt-5-mini"
+},
+"6792d8df88335227f025aa13e421ef0218dccc321028d6ca506da72e0a4675bd": {
+"content": "<t78>Maya sagt, dass</t78>2/6<t80>und</t80>1/3<t82>sind gleichwertig. Hat sie recht? Erkläre, wie du das weißt.</t82>",
+"model": "gpt-5-mini"
+},
+"690f0defa3f147ea838b1cf4e4ac4495609dd8d7542cc6605ad168d367d18180": {
+"content": "<t19>Trouver des fractions équivalentes</t19>",
+"model": "gpt-5-mini"
+},
+"6b9589d11a7807e5ff085c5fc3016c1c68174b1bc804a2610184f34a651d6201": {
+"content": "<t15>Finde gleichwertige Brüche durch </t15><t16>Multiplikation </t16><t17>des Zählers und des Nenners mit derselben Zahl.</t17>",
+"model": "gpt-5-mini"
+},
+"6c26778d9ffdad398d6622af3ea224a5d8ed2e432b8c32fa50d0029894df6213": {
+"content": "<t54>الشكل 1.</t54><t55>ثلاثة أشرطة كسر. الأجزاء المظللة متساوية الحجم.</t55>",
+"model": "gpt-5-mini"
+},
+"6d18252aaa79d29ac069137259b200d283a8b28fc94d278b4dae64653c35ecc6": {
+"content": "<t24>Commencez par</t24>",
+"model": "gpt-5-mini"
+},
+"6d51f027eba9ea03af3d5b5d15349af950ed1ccad0fab725fd529619e0ab4c71": {
+"content": "<t51>O</t51> <t52>denominador</t52> <t53>é o número de baixo. Ele indica quantas partes iguais formam um todo.</t53>",
+"model": "gpt-5-mini"
+},
+"70bbd7e9d42c8e84b67cb583e6e72dafe3a60a2e70ee2e1497e8147695ebe0aa": {
+"content": "<t23>ابحث عن النمط في الجدول أدناه.</t23>",
+"model": "gpt-5-mini"
+},
+"713c778adb4b549306a0a7daa634c3e8c5de14bdf87b7117331b6bd03ae2fbbf": {
+"content": "<t98>Mathématiques 4e année · Fractions équivalentes · Page</t98>",
+"model": "gpt-5-mini"
+},
+"72eccb4d3123012a4e7370a2cb303074c1f4d66c7f6dfaf23e337f64ed131ecd": {
+"content": "<t3>Stell dir vor, du und ein Freund habt jeweils ein gleich großes Sandwich. Du schneidest deins in </t3><t4>2 gleich große Teile</t4><t5>und isst einen Teil. Dein Freund schneidet seines in </t5><t6>4 gleich große Teile</t6><t7>und isst zwei davon. Wer hat mehr gegessen?</t7>",
+"model": "gpt-5-mini"
+},
+"72f73f202b87a6ed6674107c5418f02489862d2760150ae672eb21a2acb7bf65": {
+"content": "<t26>Equivalente</t26>",
+"model": "gpt-5-mini"
+},
+"73d3e6e5f7455c8869f4e56c03815895b9022ef8168f83c706d8caa93e3f538d": {
+"content": "<t64>Exercices</t64>",
+"model": "gpt-5-mini"
+},
+"73ebe94475758aef1b4ea011667ac3297572aa6eb1b4dfd1d606cb1dff1920be": {
+"content": "<t19>Encontrar fracciones equivalentes</t19>",
+"model": "gpt-5-mini"
+},
+"7450e09586bc8cde5d8720027e9114d026a5564718984aa1e8435b7578df28ff": {
+"content": "<t13>En esta lección aprenderás:</t13>",
+"model": "gpt-5-mini"
+},
+"760e03ed71d450dc82294eb1c44201f94085406ae4ee2816bb724dd1bda23e81": {
+"content": "<t51>ال</t51><t52>مقام</t52><t53>هو العدد السفلي. يبيّن كم جزءًا متساويًا يُكوّن الكلّ الواحد.</t53>",
+"model": "gpt-5-mini"
+},
+"763a68464eaefb31975fa5efda97a0f7f4ace4f9e4c63bc03dbce6d29c07f3da": {
+"content": "<t1>رياضيات الصف الرابع · وحدة الكسور · الدرس 7</t1>",
+"model": "gpt-5-mini"
+},
+"764616685516319538f633ea746d6dbb197563bee68d43daa917fff9f8f8430f": {
+"content": "<t8>¡Ninguno de los dos! Ambos comieron</t8><t9>la mitad</t9><t10>de un sándwich. Las fracciones que nombran la misma cantidad se llaman</t10><t11>fracciones equivalentes</t11>.",
+"model": "gpt-5-mini"
+},
+"7654402ce0b073df4edf744502a29486bcd7e050b9c21cc883739b1e24fc5de4": {
+"content": "<t31>النصف يساوي اثنين من الأجزاء الأربعة.</t31>",
+"model": "gpt-5-mini"
+},
+"76c06dfcd47e875cef00a809c222d56cd4547779c3af553d5f35a0f73e6d480f": {
+"content": "<t91>Finde</t91> <t92>drei</t92> 2/3-<t93>gleichwertige Brüche</t93><t95>. Benutze das Muster aus der Tabelle, um dir zu helfen.</t95>",
+"model": "gpt-5-mini"
+},
+"797396229c6b4b9c091e2930adc59fb2e3336a228ca5517147ec847a02647c70": {
+"content": "<t3>Imagine que toi et un ami avez chacun un sandwich de la même taille. Tu coupes le tien en </t3><t4>2 parts égales</t4><t5>et en manges une. Ton ami coupe le sien en </t5><t6>4 parts égales</t6><t7>et en mange deux. Qui en a mangé le plus ?</t7>",
+"model": "gpt-5-mini"
+},
+"799b7ae863f15bba794bfe1f36f19bcd2471a9eeb16fde490f9fa57a9d6b618e": {
+"content": "<t25>اضرب في</t25>",
+"model": "gpt-5-mini"
+},
+"7bea18e1f6b5f032d1d39a78e710a3d39c7cbbf5952a14e5425f03d6e7140bf9": {
+"content": "<t83>Zeichne eine Zahlengerade von </t83>0<t85> bis </t85>1<t87>. Markiere </t87>1/2<t89> und einen weiteren Bruch, der ihm gleich ist.</t89>",
+"model": "gpt-5-mini"
+},
+"7d0872240b8cf1187d9144e785c321aa3d3e3db1a00cf0a5849114f087f409fe": {
+"content": "<t2>Fracciones equivalentes</t2>",
+"model": "gpt-5-mini"
+},
+"7d4ec8263c99f870761baffadd8e40e230d5fb70dc00003e4f4c83ff8e64b40c": {
+"content": "<t56>Figure 2.</t56><t57>Les fractions</t57>1/2, 2/4<t61>et</t61>4/8<t63>se situent toutes au même point de la droite numérique.</t63>",
+"model": "gpt-5-mini"
+},
+"811a82f7fecd81471ee6633b924549139d5040f5bbe694f75a4289ffb62d8f8b": {
+"content": "<t24>Comece com</t24>",
+"model": "gpt-5-mini"
+},
+"8240416dddfb69fa641e65f01046634d4897348ee831d91c5f9e3210a4fbe8cb": {
+"content": "<t8>لا أحد منكما! أكلتما </t8><t9>نصف </t9><t10>شطيرة. الكسور التي تمثل نفس المقدار تُسمى </t10><t11>كسور متكافئة</t11>.",
+"model": "gpt-5-mini"
+},
+"82f7e30a5654062a5c4e93000485deb9dd9308ea6e8a621ac4a5c0e1b03a530a": {
+"content": "<t25>Multiplique por</t25>",
+"model": "gpt-5-mini"
+},
+"830bd16075011d0e13423032cb4edbe6abeff6b6098c4a8b251d748ab6d94ab1": {
+"content": "<t19>Encontrando frações equivalentes</t19>",
+"model": "gpt-5-mini"
+},
+"8377d34848cccc491d66349829cfb4858237b20937d1f1681210a94a6246418d": {
+"content": "<t15>Encuentra fracciones equivalentes</t15><t16>multiplicando</t16><t17>el numerador y el denominador por el mismo número.</t17>",
+"model": "gpt-5-mini"
+},
+"84d4ce97e61aafef8a9887b25062fbc265c47556216a158c0ae0ebe7cf3b7b0a": {
+"content": "<t78>Maya dit que</t78>2/6<t80>et</t80>1/3<t82>sont équivalents. A-t-elle raison ? Explique comment tu le sais.</t82>",
+"model": "gpt-5-mini"
+},
+"856af929775ec142f60f3b412d3ed39b8865e4a5029b5ed238ce864b4f0fa128": {
+"content": "<t70>Colorie une barre de fraction pour montrer</t70>2/3<t72>. Ensuite, colorie une deuxième barre pour montrer</t72>4/6<t74>. Que remarques-tu ?</t74>",
+"model": "gpt-5-mini"
+},
+"86a3bb227328cf74481687be58ea0909d34d1f8497512f9f2d7aaef4c98cb3d0": {
+"content": "<t90>Herausforderung</t90>",
+"model": "gpt-5-mini"
+},
+"89837995323c2d8690fc365d44e53994521cb8aaf07922c7fd264ce7a41f9c67": {
+"content": "<t1>Matemática do 4º ano  ·  Unidade: Frações  ·  Lição 7</t1>",
+"model": "gpt-5-mini"
+},
+"8a6f4d4e4f55e34ae9dd28a6042e304566c1d3b5a46f857ab64f8a0d3200f2ae": {
+"content": "<t96>Dica:</t96><t97>multiplique por 2, depois por 3, depois por 4.</t97>",
+"model": "gpt-5-mini"
+},
+"8ba2744d640e050517e8d5f502a63c97f358a7f05650d9bdc297ff9f543e6cec": {
+"content": "<t65>أجب عن كل سؤال. أظهر عملك باستخدام </t65><t66>صورة</t66><t67> أو </t67><t68>جملة عددية</t68>.",
+"model": "gpt-5-mini"
+},
+"8cc0a56d3b9632a39c1be3175876ae6cc9270836d4b5671c02a28d58f1439c54": {
+"content": "<t20>للحصول على كسر مكافئ، اضرب البسط والمقام في</t20><t21>نفس</t21><t22>العدد. يبدو الكسر مختلفًا، لكن قيمته لا تتغير.</t22>",
+"model": "gpt-5-mini"
+},
+"8f58f308607c05d483d810741e1fa66414f05a1a44204163e9fbc133d303a810": {
+"content": "<t75>Écris une fraction équivalente à</t75>3/5.",
+"model": "gpt-5-mini"
+},
+"92ebcb0a5215910ec8092be2815d0e7c555dcd90299735a28ee650c7340ba7a3": {
+"content": "<t91>Encuentra</t91> <t92>tres</t92> <t93>fracciones equivalentes a</t93>2/3<t95>. Usa el patrón de la tabla para ayudarte.</t95>",
+"model": "gpt-5-mini"
+},
+"97e81e38d4aa68b7cca576e4565eb169c1ebede15f4cc4daa3a1da4fc66f4430": {
+"content": "<t44>Vous pouvez aussi vérifier votre travail sur une </t44><t45>droite numérique</t45><t46>. Les fractions équivalentes se trouvent toujours exactement au même point.</t46>",
+"model": "gpt-5-mini"
+},
+"9a78767fbf2911c04a01ad68d53af7e90f6fcd2294ac47c8d759ac8d88e13e12": {
+"content": "<t35>Ein Drittel ist gleich drei Neuntel.</t35>",
+"model": "gpt-5-mini"
+},
+"9b51972cb215dbe7b469024f56e6c3980b462dccc0fb0c82859d1113fa75874d": {
+"content": "<t75>Escreva uma fração equivalente a</t75>3/5.",
+"model": "gpt-5-mini"
+},
+"9d445f723d1960148c17c6385372587f1721cc0226f22c6d96e34a100126b989": {
+"content": "<t44>يمكنك أيضًا فحص عملك على </t44><t45>خط الأعداد</t45><t46>. تقع الكسور المكافئة دائمًا على نفس النقطة تمامًا</t46>",
+"model": "gpt-5-mini"
+},
+"9e80a3bd8aeb29067bd05d3b6632d22099e797edf88a02cbcab9ce000a25168d": {
+"content": "<t3>Imagine que você e um amigo têm, cada um, um sanduíche do mesmo tamanho. Você corta o seu em </t3><t4>2 partes iguais</t4><t5> e come uma parte. Seu amigo corta o dele em </t5><t6>4 partes iguais</t6><t7> e come duas delas. Quem comeu mais?</t7>",
+"model": "gpt-5-mini"
+},
+"a41e9cf29f2c24bc5ae473d3b44d153bd383abfc1a978d43c96301d059df3046": {
+"content": "<t15>Trouver des fractions équivalentes en </t15><t16>multipliant </t16><t17>le numérateur et le dénominateur par le même nombre.</t17>",
+"model": "gpt-5-mini"
+},
+"a425c4417ee355162cfbbac884f08752c4f18432d4a6b97cb73bb62a34830676": {
+"content": "<t19>إيجاد الكسور المكافئة</t19>",
+"model": "gpt-5-mini"
+},
+"aa12d10192611e3641908aa0ab238ff24656ae6c66694182bf16bbc3cb8887f8": {
+"content": "<t20>Para obter uma fração equivalente, multiplique o número de cima e o número de baixo pelo </t20><t21>mesmo</t21><t22>número. A fração parece diferente, mas seu valor não muda.</t22>",
+"model": "gpt-5-mini"
+},
+"ab646a14b7010c2f94fdc4322ad67987c1863f4253dd21ebd66ba2694d93c4f6": {
+"content": "<t65>Beantworte jede Frage. Zeige deine Arbeit mit einem </t65><t66>Bild</t66><t67> oder einer </t67><t68>Zahlengleichung</t68>.",
+"model": "gpt-5-mini"
+},
+"ab6f69f0f89b8653a26736ad19436b892cea439905d83dbf7d6d1e8dc89747d9": {
+"content": "<t20>Pour obtenir une fraction équivalente, multipliez le numérateur et le dénominateur par le </t20><t21>même</t21><t22> nombre. La fraction semble différente, mais sa valeur ne change pas.</t22>",
+"model": "gpt-5-mini"
+},
+"ab873d0794f3746761e3629fb52937ec55150dea026c4a3aeb2480c7963aa211": {
+"content": "<t1>Mathematik, 4. Klasse · Einheit: Brüche · Lektion 7</t1>",
+"model": "gpt-5-mini"
+},
+"ae21d1ce8b1a6ea45a9e5a62cfdf9604cf6c93a2ae352689b3c0aa1117e39599": {
+"content": "<t24>Beginne mit</t24>",
+"model": "gpt-5-mini"
+},
+"af3c5b4a08b67a4ecc4e1f13d5065d3430ab58c26368c2f9a480150872a82e8e": {
+"content": "<t48>Le </t48><t49>numérateur </t49><t50>est le nombre en haut. Il indique combien de parts vous avez.</t50>",
+"model": "gpt-5-mini"
+},
+"af9d2d87c6aa3fff3fe04fe99b4190d0121c271884ec52c186e233fb270ffaba": {
+"content": "<t47>Denk daran</t47>",
+"model": "gpt-5-mini"
+},
+"afc8788ce60508f96b6251b19a691d286901e945756fb1d492c4ef7705e1bda7": {
+"content": "<t98>رياضيات الصف الرابع · الكسور المكافئة · صفحة</t98>",
+"model": "gpt-5-mini"
+},
+"b001f60b808ab74f0f5d765076fd9eb9957f304bb135856f260a29f76b1c163c": {
+"content": "<t44>También puedes comprobar tu trabajo en una </t44><t45>recta numérica</t45><t46>. Las fracciones equivalentes siempre caen exactamente en el mismo punto.</t46>",
+"model": "gpt-5-mini"
+},
+"b1acd59d75ee62db4dfbb0d9c5f927eb2981264cef812fa3deef714e34b06f74": {
+"content": "<t27>Por extenso</t27>",
+"model": "gpt-5-mini"
+},
+"b1cf997249169bea92e8c409c16ecd91a3d0355ba342d1b2a0d110ee19cf9123": {
+"content": "<t96>Indice : </t96><t97>multipliez par 2, puis par 3, puis par 4.</t97>",
+"model": "gpt-5-mini"
+},
+"b337f8e965c2e8c7cfab3b918ee4042b832066198a23bb9a983ff15688d58ab2": {
+"content": "<t39>ثلاثة أرباع تعادل ستة أثمان.</t39>",
+"model": "gpt-5-mini"
+},
+"b420594376c57bd1af7a68f3c6d9c85ad37f3e1a1eb465eb26c4c1e1aa0f7965": {
+"content": "<t43>اثنان على خمسة يساوي ثمانية على عشرين.</t43>",
+"model": "gpt-5-mini"
+},
+"b528dca8549ef56ae6945f8bd6dffa347a7c2dc0c0f05a4e4df67ae327f1dc86": {
+"content": "<t23>Busca el patrón en la tabla de abajo.</t23>",
+"model": "gpt-5-mini"
+},
+"b62b09044d9a0ff99d373b220f01f6f628fb53f2e3e8d59ebd5a55a670edc006": {
+"content": "<t25>Multiplier par</t25>",
+"model": "gpt-5-mini"
+},
+"b645fd59e89f47e7de46e702eeda87a6420da5bba5319faa16d2f3b699e66623": {
+"content": "<t64>Práctica</t64>",
+"model": "gpt-5-mini"
+},
+"b765b5f193a61820aabbd493d264dd6245cf4cb2d5f6a5112e25aafd07b88a91": {
+"content": "<t14>Usa barras de fracciones para ver cuándo dos fracciones son iguales.</t14>",
+"model": "gpt-5-mini"
+},
+"b7d374fe7d4466eeeedc4b4d2c2ef0c42c65c64fc5a066f69ba32bd9e58fd4aa": {
+"content": "<t43>Deux cinquièmes sont équivalents à huit vingtièmes.</t43>",
+"model": "gpt-5-mini"
+},
+"b86af2aa4b3d90439d26f498732627c4257285cb812a8de4e4e33e66f0c61fed": {
+"content": "<t35>Un tiers est égal à trois neuvièmes.</t35>",
+"model": "gpt-5-mini"
+},
+"b91fe8536efa8c08f84c9eac9dd48e20bc7e8e3830ab2f5e1fb89542a0ea81c1": {
+"content": "<t48>O</t48><t49>numerador</t49><t50>é o número superior. Ele indica quantas partes você tem.</t50>",
+"model": "gpt-5-mini"
+},
+"b97aad9fb9c60ff98878711a3598f105ee8a3151f9f6c466f004c55333062069": {
+"content": "<t98>Mathematik, 4. Klasse · Äquivalente Brüche · Seite</t98>",
+"model": "gpt-5-mini"
+},
+"ba241af52f388997bc6701a98715db6d6a7736973ffdd48ddf4dab9f69fd7420": {
+"content": "<t25>Multiplica por</t25>",
+"model": "gpt-5-mini"
+},
+"bb1e4b117164048fdd34aa43098c68186bd1fcf4b518d2c9d941ee585981b95b": {
+"content": "<t27>En toutes lettres</t27>",
+"model": "gpt-5-mini"
+},
+"bb38768d2c8f190f0716722e18bfc0a3038445f07faf675abded660495b0a50c": {
+"content": "<t27>بالكلمات</t27>",
+"model": "gpt-5-mini"
+},
+"be167dfcaf4d2d8f638d91313705cdba23d2378bcba56a46d1d288559acc6b05": {
+"content": "<t23>Suche das Muster in der Tabelle unten.</t23>",
+"model": "gpt-5-mini"
+},
+"c1cffe4964976de3063f61418b50cc1e2199bf40180efa8f8f6fe40640b684c8": {
+"content": "<t48>El</t48><t49>numerador</t49><t50>es el número de arriba. Indica cuántas partes tienes.</t50>",
+"model": "gpt-5-mini"
+},
+"c679490b410328af9a949930137bcf53c35a29ef5ae3390a4eeb0b4ea936a8d9": {
+"content": "<t31>Un demi est égal à deux quarts.</t31>",
+"model": "gpt-5-mini"
+},
+"c7101fb09a85aea897ca4b6b0a6b9c967ac8114598fcf9f6d1bb7ccb6c7d1c84": {
+"content": "<t39>Les trois quarts sont égaux à six huitièmes.</t39>",
+"model": "gpt-5-mini"
+},
+"ce07d745271e7b30e60de66fe37314defdb09a00e5365386cd026a4e5bec273a": {
+"content": "<t15>Encontre frações equivalentes </t15><t16>multiplicando </t16><t17>o numerador e o denominador pelo mesmo número.</t17>",
+"model": "gpt-5-mini"
+},
+"d18ced5686af1c3b90b27935635f4df3c6e3eb353b6998c9fbf9a54ae789bbaf": {
+"content": "<t2>كسور متكافئة</t2>",
+"model": "gpt-5-mini"
+},
+"d23b8de7be3ef4f71e3eba09ecf835d7b86dae6c900ecb949d2e8473a47be3dc": {
+"content": "<t15>جد كسور مكافئة</t15><t16> بضرب</t16><t17> البسط والمقام بنفس العدد.</t17>",
+"model": "gpt-5-mini"
+},
+"d2b64c1b8cde440d18cd38a35a61365624915170fa7ef20fb2a1c8f5ecb76d2f": {
+"content": "<t39>Três quartos é igual a seis oitavos.</t39>",
+"model": "gpt-5-mini"
+},
+"d33ebfb8558bb006f078e717845cdf84cf80c98d48db6950c534ce9a7c55f3f0": {
+"content": "<t26>Equivalente</t26>",
+"model": "gpt-5-mini"
+},
+"d347db17e38e26ff136bc780a3b2e5668e9b401f4a7c01f7d6673cf24996a0db": {
+"content": "<t18>اشرح تفكيرك بالكلمات والصور والأرقام.</t18>",
+"model": "gpt-5-mini"
+},
+"d4bd34750b2d72cea3fb9d2b13a5eb6603a91176f886d7f58f4863025cf7c838": {
+"content": "<t65>Responde cada pregunta. Muestra tu trabajo con un </t65><t66>dibujo </t66><t67>o una </t67><t68>oración numérica</t68>.",
+"model": "gpt-5-mini"
+},
+"d69a8216c3fc3b22b7a2aea660a16e86889756b78473fadbd0c13b80fc0f3457": {
+"content": "<t44>Du kannst deine Arbeit auch auf einem</t44><t45>Zahlenstrahl</t45><t46>. Gleichwertige Brüche liegen immer genau an derselben Stelle.</t46>",
+"model": "gpt-5-mini"
+},
+"d81cbe4dec303117b7d53d556f9778b97a6a763296b3435cd6f1eb74f91445ff": {
+"content": "<t14>Utilisez des barres fractionnaires pour voir quand deux fractions sont égales.</t14>",
+"model": "gpt-5-mini"
+},
+"d9498d054957fcb0d76b61580fc3f4031bcb544635c49dde871b049a85e0c97a": {
+"content": "<t20>Para obtener una fracción equivalente, multiplica el numerador y el denominador por el</t20><t21>mismo</t21><t22>número. La fracción parece diferente, pero su valor no cambia.</t22>",
+"model": "gpt-5-mini"
+},
+"da0e86b17626be1e653bfa572f8d4456d887406b49f83594c6601f73a482d7e3": {
+"content": "<t98>Matemáticas de 4.º grado · Fracciones equivalentes · Página</t98>",
+"model": "gpt-5-mini"
+},
+"da70ea75496386964d41a9482cedd1ca093190136d15d995fe2d4a111ae3aab7": {
+"content": "<t8>Nenhum de vocês! Vocês dois comeram </t8><t9>metade</t9><t10>de um sanduíche. Frações que representam a mesma quantidade são chamadas de </t10><t11>frações equivalentes</t11>.",
+"model": "gpt-5-mini"
+},
+"db8af33827f8d5776d869cf06b8fc16f93fd8aa8dd243bf3ff8cc1d4f81df422": {
+"content": "<t56>Figura 2.</t56><t57>As frações </t57>1/2, 2/4<t61> e </t61>4/8<t63> estão todas no mesmo ponto da reta numérica.</t63>",
+"model": "gpt-5-mini"
+},
+"dc3fcc1f638d72d79343958ab226fc3f69486a23969312babc42350a21e7f5c4": {
+"content": "<t98>Matemática do 4º ano · Frações equivalentes · Página</t98>",
+"model": "gpt-5-mini"
+},
+"dc98b675bbb537082ffa52766ae056dd6a495fe630c906525c48c582d5c000f8": {
+"content": "<t78>تقول مايا إن </t78>2/6<t80> و </t80>1/3<t82> متكافئان. هل هي محقة؟ اشرح كيف تعرف.</t82>",
+"model": "gpt-5-mini"
+},
+"dca13030467b2e7ef2e0824cc48ebd6a08772924c2963e48ece125be5178f92b": {
+"content": "<t35>Un tercio equivale a tres novenos.</t35>",
+"model": "gpt-5-mini"
+},
+"dd42ebd03725e94c5e06d302702baecab6b3971c6173890eff949636dd3563dd": {
+"content": "<t25>Multipliziere mit</t25>",
+"model": "gpt-5-mini"
+},
+"ddaf483a7e9d45ec153a4516171b26fe929982402ba3cb7735ec5b68452a18c4": {
+"content": "<t24>ابدأ بـ</t24>",
+"model": "gpt-5-mini"
+},
+"deea95815f74c20f5e3e95bcf5ed5d6ad4cbff6c8ecfa059a50204a6468c7e0d": {
+"content": "<t47>Lembre-se</t47>",
+"model": "gpt-5-mini"
+},
+"e0650edc11ebae41d1d3d8643750d1a1247089e422da6248ff08c14644caaac9": {
+"content": "<t65>Responda cada pergunta. Mostre seu trabalho com um </t65><t66>desenho</t66><t67> ou uma </t67><t68>sentença numérica</t68>",
+"model": "gpt-5-mini"
+},
+"e0ecafcf461bc9f3098fa7b58b73a3ab18910fc38d622e3769dd0b46e5552c5b": {
+"content": "<t64>Übungen</t64>",
+"model": "gpt-5-mini"
+},
+"e4e3776ff5105336f26aa69714d06e5a95e87cdb210c594915627934f3f10904": {
+"content": "<t1>Mathématiques de 4e année · Unité : Fractions · Leçon 7</t1>",
+"model": "gpt-5-mini"
+},
+"e538d929f4513cbb3660809b688186fbc0714299407991c9634b27b8a40c5c86": {
+"content": "<t27>In Worten</t27>",
+"model": "gpt-5-mini"
+},
+"e78fe9eea5012444a133cba38ff0a9bc1301b6761556f4646f26e6e6da10b06f": {
+"content": "<t43>Zwei Fünftel entsprechen acht Zwanzigsteln.</t43>",
+"model": "gpt-5-mini"
+},
+"ea9d633040897cdf918de31308db382565708e59a49d75bb166850103939cf20": {
+"content": "<t47>Rappelle-toi</t47>",
+"model": "gpt-5-mini"
+},
+"ecaa864a2be0b982dc3dc2aa6314f56b0017eefc7fcd3133075428bba06e5aa3": {
+"content": "<t13>In dieser Lektion wirst du:</t13>",
+"model": "gpt-5-mini"
+},
+"ee1a2245bb3d4d32763baa4ac83e55591b7d79dcd986c5b86a1c1ba774fbb3ab": {
+"content": "<t96>Pista:</t96><t97>multiplica por 2, luego por 3 y luego por 4.</t97>",
+"model": "gpt-5-mini"
+},
+"f08c3ecc512d63c46df3fc7b6f1bb5a7722a08f1e4b92840ec1740f0ca0bae0f": {
+"content": "<t14>استخدم خطوط الكسور لترى متى يكون كسران متساويان.</t14>",
+"model": "gpt-5-mini"
+},
+"f1b25c48333be7e60ee8219fcc6ed9786b9e3e7112a235dba4bc8caac3d04470": {
+"content": "<t56>Abbildung 2.</t56><t57>Die Brüche</t57>1/2, 2/4<t61>und</t61>4/8<t63>befinden sich alle an derselben Stelle auf der Zahlengerade.</t63>",
+"model": "gpt-5-mini"
+},
+"f1e1d7c2e240d018ecd5ddd54b12eff8602414daa23b03232ba94961793dc20e": {
+"content": "<t90>Desafio</t90>",
+"model": "gpt-5-mini"
+},
+"f485d729a7783dacd4a0e53611974bd779e2d8ca45ce6115fcc477e1e13fab49": {
+"content": "<t31>Um meio é igual a dois quartos.</t31>",
+"model": "gpt-5-mini"
+},
+"f64db41cbf4952d61449cfd6f11f833abc23d35ba78ed018bbc2cc61693d5f8c": {
+"content": "<t83>Dibuja una recta numérica desde</t83>0<t85>hasta</t85>1<t87>. Marca</t87>1/2<t89>y otra fracción que sea igual a ella.</t89>",
+"model": "gpt-5-mini"
+},
+"f65b0055c1db33bb5fb48a65b776ce8dab0a593951b98a19e174cdb7a5eb9a67": {
+"content": "<t78>Maya diz que </t78>2/6<t80> e </t80>1/3<t82>são equivalentes. Ela está certa? Explique como você sabe.</t82>",
+"model": "gpt-5-mini"
+},
+"f7f4acd0ff00907a4a2b3249817fc2814edcda5d0c8badd6eef9f2e6b4b534a1": {
+"content": "<t43>Dois quintos é igual a oito vigésimos.</t43>",
+"model": "gpt-5-mini"
+},
+"f7fc950494204e0921df3d602aaca908ffa5402e21b808942d5d2ec0aed1dc2a": {
+"content": "<t18>Explica tu razonamiento con palabras, dibujos y números.</t18>",
+"model": "gpt-5-mini"
+},
+"f9b5b779e31725c2fa4a13a023f032145a9d3737132cdacbd65dc9d6df881c4c": {
+"content": "<t56>Figura 2.</t56><t57> Las fracciones </t57>1/2, 2/4<t61> y </t61>4/8<t63> están en el mismo punto de la recta numérica.</t63>",
+"model": "gpt-5-mini"
+},
+"fc01576d44c07328b57c2fcaefc4c1c40e417be7b20776ad3b2fd9f39657e51a": {
+"content": "<t24>Empieza con</t24>",
+"model": "gpt-5-mini"
+}
+}

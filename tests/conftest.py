@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# Make sure nothing in a developer's .env leaks into tests.
+# Make sure nothing in a developer's .env leaks into tests: stop config.py's
+# load_dotenv() from reading .env at all, then clear anything already exported.
+import dotenv  # noqa: E402
+dotenv.load_dotenv = lambda *args, **kwargs: False
 for var in ("OPENAI_API_KEY", "SITE_PASSWORD", "PUBLIC_DEMO", "ROSETTA_DATA_DIR", "DAILY_SPEND_CAP_USD",
             "RATE_LIMIT_JOBS_PER_HOUR", "RATE_LIMIT_SAMPLES_PER_HOUR", "MAX_WORDS_PER_JOB", "MAX_UPLOAD_MB",
             "MAX_CONCURRENT_JOBS", "JOB_TTL_HOURS", "SAMPLE_CACHE_PATH"):
