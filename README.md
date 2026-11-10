@@ -18,7 +18,7 @@ two minutes (see [Quick start](#quick-start)) and click **Try it with a sample l
 </tr>
 <tr>
 <td>Live progress, step by step</td>
-<td>Results: summary, downloads and a side-by-side preview<br><sub>Illustrative: the Spanish in this screenshot was written by hand to show the layout. Run the sample to see live model output.</sub></td>
+<td>Results: summary, downloads and the side-by-side proof (the sample lesson in Spanish)</td>
 </tr>
 </table>
 
@@ -84,9 +84,10 @@ because jobs run in background threads of that worker). Set `OPENAI_API_KEY` in 
   uploads pause with a friendly message and the sample keeps working. Also set a hard monthly budget in the
   OpenAI dashboard; the in-app cap resets if the server's disk is wiped (see limitations).
 
-To make the sample free on the live site, run `python scripts/warm_sample_cache.py` once locally (about
-$0.05-0.10 of real API calls with gpt-5-mini) and commit `samples/translation_cache.json`. The app answers
-sample runs from that file instead of calling the API.
+The sample lesson is free to run: its real translations (gpt-5-mini, all five languages) are committed in
+`samples/translation_cache.json`, and the app answers sample runs from that file, so no API key is needed for
+the **Try it** button. If you change the sample or the translation prompts, rebuild the cache with
+`python scripts/warm_sample_cache.py` (real, billed API calls; about $0.05-0.10 with gpt-5-mini) and commit it again.
 
 ### Settings
 

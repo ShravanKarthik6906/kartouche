@@ -196,7 +196,8 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
             ok, wait = limiter.check(visitor_id(), kind, limit)
             if not ok:
                 mins = max(1, round(wait / 60))
-                what = "sample runs" if is_sample else "translations"
+                noun = "sample run" if is_sample else "translation"
+                what = noun if limit == 1 else noun + "s"
                 return fail(f"You've reached this demo's limit of {limit} {what} per hour. "
                             f"Please try again in about {mins} minute{'s' if mins != 1 else ''}.", 429)
             if store.running_count() >= s.max_concurrent_jobs:

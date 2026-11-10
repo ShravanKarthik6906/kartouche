@@ -148,6 +148,14 @@ def test_public_mode_ignores_password_and_rate_limits(make_app):
     wait_for_job(app, job_id(r))
 
 
+def test_rate_limit_message_uses_singular_for_one(make_app):
+    app, client, _ = make_app(PUBLIC_DEMO="true", RATE_LIMIT_SAMPLES_PER_HOUR="1", DAILY_SPEND_CAP_USD="100")
+    wait_for_job(app, job_id(start(client, sample=True)))
+    r = start(client, sample=True)
+    assert r.status_code == 429
+    assert "limit of 1 sample run per hour" in r.get_json()["error"]
+
+
 def test_public_mode_word_limit(make_app):
     _app, client, _ = make_app(PUBLIC_DEMO="true", MAX_WORDS_PER_JOB="50")
     r = start(client, file=(SAMPLE_IDML, "a.idml"))
