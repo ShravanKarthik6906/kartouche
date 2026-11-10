@@ -34,8 +34,12 @@ import sqlite3
 import re
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+
+import languages
+import llm
 
 # Load secrets (OPENAI_API_KEY, ROSETTA_OPENAI_MODEL) from .env.
 # This is intentionally only done here in translate.py - the API key is
@@ -47,10 +51,17 @@ DEFAULT_MODEL = os.environ.get("ROSETTA_OPENAI_MODEL", "gpt-4o")
 
 TAG_RE = re.compile(r"<t(\d+)>(.*?)</t\1>", re.DOTALL)
 
-LANGUAGE_NAMES = {
-    "es": "Spanish",
-    "ar": "Arabic",
-}
+# How each target language is named to the model - see languages.py.
+LANGUAGE_NAMES = {code: lang.prompt_name for code, lang in languages.LANGUAGES.items()}
+
+# Paragraphs translated in parallel. Each paragraph is still one independent
+# call with its full sentence context, exactly as before - this only stops
+# the run waiting on one network round-trip at a time.
+DEFAULT_CONCURRENCY = int(os.environ.get("TRANSLATE_CONCURRENCY", "4"))
+
+# Abort after this many consecutive failed calls (e.g. the network is down)
+# instead of grinding through every remaining paragraph.
+MAX_CONSECUTIVE_FAILURES = 4
 
 
 def build_tagged_paragraph(fragments):
@@ -143,21 +154,30 @@ def call_openai_translate(tagged_paragraph: str, target_lang_name: str, context_
     return response.choices[0].message.content.strip()
 
 
-def translate_document(db_path: str, document_id: int, target_langs, api_key=None, model=None, dry_run=False, paragraph_limit=None, only_paragraph_seq=None, only_story_id=None, progress_callback=None, usage_callback=None):
+def translate_document(db_path: str, document_id: int, target_langs, api_key=None, model=None, dry_run=False, paragraph_limit=None, only_paragraph_seq=None, only_story_id=None, progress_callback=None, usage_callback=None, client=None, concurrency=None):
     """
-    progress_callback(paragraphs_done, paragraphs_total), if given, is called
-    after each paragraph (across all target_langs) finishes - UI progress
-    only, optional. usage_callback is forwarded to call_openai_translate for
-    real token-usage reporting, optional.
+    progress_callback(units_done, units_total), if given, is called after
+    each (paragraph, language) unit finishes - UI progress only, optional.
+    usage_callback is forwarded to call_openai_translate for real token-usage
+    reporting, optional.
+
+    client: an OpenAI-compatible client to use instead of building one (the
+    web app passes a guarded/caching client; tests pass a fake). Calls that
+    fail with an error that would repeat on every call (bad key, no credit,
+    spending cap reached, ...) abort the run with llm.FatalAPIError rather
+    than being recorded paragraph by paragraph.
     """
     model = model or DEFAULT_MODEL
-    conn = sqlite3.connect(db_path)
+    concurrency = max(1, concurrency or DEFAULT_CONCURRENCY)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
-    client = None
-    if not dry_run:
-        from openai import OpenAI
-        client = OpenAI(api_key=api_key or os.environ.get("OPENAI_API_KEY"))
+    if not dry_run and client is None:
+        try:
+            client = llm.make_client(api_key)
+        except llm.MissingAPIKey as e:
+            conn.close()
+            raise llm.FatalAPIError(e)
 
     if only_paragraph_seq is not None and only_story_id is not None:
         paragraphs = conn.execute("""
@@ -189,36 +209,70 @@ def translate_document(db_path: str, document_id: int, target_langs, api_key=Non
 
     stats = {lang: {"translated": 0, "skipped_no_content": 0, "errors": 0} for lang in target_langs}
 
-    for para_index, p in enumerate(paragraphs):
+    # Work out every (paragraph, language) unit up front.
+    units = []
+    for p in paragraphs:
         fragments = conn.execute("""
             SELECT id, raw_text, needs_translation, context_note
             FROM text_runs
             WHERE story_id = ? AND paragraph_seq = ?
             ORDER BY sequence_index
         """, (p["story_id"], p["paragraph_seq"])).fetchall()
-
         if not any(f["needs_translation"] for f in fragments):
             for lang in target_langs:
                 stats[lang]["skipped_no_content"] += 1
-            if progress_callback:
-                progress_callback(para_index + 1, len(paragraphs))
             continue
-
         tagged, edge_whitespace = build_tagged_paragraph(fragments)
         context_notes = [f["context_note"] for f in fragments if f["context_note"]]
         context_note = "; ".join(context_notes) if context_notes else None
-
         for lang in target_langs:
-            lang_name = LANGUAGE_NAMES[lang]
-            try:
-                if dry_run:
-                    translated_raw = TAG_RE.sub(
-                        lambda m: f'<t{m.group(1)}>[{lang}]{m.group(2)}</t{m.group(1)}>',
-                        tagged
-                    )
-                else:
-                    translated_raw = call_openai_translate(tagged, lang_name, context_note, client, model=model, usage_callback=usage_callback)
+            units.append((fragments, tagged, edge_whitespace, context_note, lang))
 
+    total_units = len(units)
+    if progress_callback:
+        progress_callback(0, total_units)
+
+    def run_unit(unit):
+        """Returns (translated_raw, None) or (None, exception). No DB access here."""
+        fragments, tagged, edge_whitespace, context_note, lang = unit
+        try:
+            if dry_run:
+                return TAG_RE.sub(
+                    lambda m: f'<t{m.group(1)}>[{lang}]{m.group(2)}</t{m.group(1)}>',
+                    tagged
+                ), None
+            return call_openai_translate(tagged, LANGUAGE_NAMES[lang], context_note, client, model=model,
+                                         usage_callback=usage_callback), None
+        except Exception as e:  # recorded per paragraph below, or aborts the run if fatal
+            return None, e
+
+    consecutive_failures = 0
+    executor = ThreadPoolExecutor(max_workers=1 if dry_run else concurrency)
+    try:
+        # map() yields results in submission order, so DB writes stay in
+        # document order (deterministic) while calls overlap.
+        for done, (unit, (translated_raw, error)) in enumerate(zip(units, executor.map(run_unit, units)), start=1):
+            fragments, tagged, edge_whitespace, context_note, lang = unit
+
+            if error is not None:
+                if llm.is_fatal(error):
+                    raise llm.FatalAPIError(error)
+                consecutive_failures += 1
+                if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+                    raise llm.FatalAPIError(error)
+                for f in fragments:
+                    if f["needs_translation"]:
+                        conn.execute("""
+                            INSERT INTO translations
+                                (text_run_id, target_language, translated_text, engine, status, error_message, translated_at)
+                            VALUES (?, ?, NULL, ?, 'error', ?, ?)
+                            ON CONFLICT(text_run_id, target_language) DO UPDATE SET
+                                status='error', error_message=excluded.error_message, translated_at=excluded.translated_at
+                        """, (f["id"], lang, "dry_run" if dry_run else model, str(error),
+                              datetime.now(timezone.utc).isoformat()))
+                        stats[lang]["errors"] += 1
+            else:
+                consecutive_failures = 0
                 per_fragment = parse_tagged_result(translated_raw)
 
                 for f in fragments:
@@ -260,29 +314,19 @@ def translate_document(db_path: str, document_id: int, target_langs, api_key=Non
                     elif status == "error":
                         stats[lang]["errors"] += 1
 
-            except Exception as e:
-                for f in fragments:
-                    if f["needs_translation"]:
-                        conn.execute("""
-                            INSERT INTO translations
-                                (text_run_id, target_language, translated_text, engine, status, error_message, translated_at)
-                            VALUES (?, ?, NULL, ?, 'error', ?, ?)
-                            ON CONFLICT(text_run_id, target_language) DO UPDATE SET
-                                status='error', error_message=excluded.error_message, translated_at=excluded.translated_at
-                        """, (f["id"], lang, "dry_run" if dry_run else model, str(e),
-                              datetime.now(timezone.utc).isoformat()))
-                        stats[lang]["errors"] += 1
-
+            conn.commit()
+            if progress_callback:
+                progress_callback(done, total_units)
+    finally:
+        executor.shutdown(wait=True, cancel_futures=True)
         conn.commit()
-        if progress_callback:
-            progress_callback(para_index + 1, len(paragraphs))
+        conn.close()
 
     print("Translation run complete.")
     for lang in target_langs:
         s = stats[lang]
         print(f"  [{lang}] translated={s['translated']}  errors={s['errors']}  paragraphs_with_no_content={s['skipped_no_content']}")
 
-    conn.close()
     return stats
 
 

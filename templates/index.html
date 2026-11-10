@@ -1,48 +1,155 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Rosetta - IDML Translator</title>
-  <style>
-    body { font-family: -apple-system, system-ui, sans-serif; max-width: 640px; margin: 60px auto; color: #1a1a1a; }
-    h1 { font-size: 22px; }
-    .subtitle { color: #666; margin-bottom: 32px; }
-    form { border: 1px solid #ddd; border-radius: 8px; padding: 24px; }
-    label.field { display: block; margin-bottom: 20px; font-weight: 600; }
-    input[type=file] { display: block; margin-top: 8px; font-weight: normal; }
-    .langs { display: flex; gap: 20px; margin-top: 8px; font-weight: normal; }
-    .langs label { display: flex; align-items: center; gap: 6px; font-weight: normal; }
-    button { background: #1a1a1a; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer; }
-    button:hover { background: #333; }
-    .error { background: #fee; border: 1px solid #f99; color: #900; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; }
-    .hint { color: #888; font-size: 13px; margin-top: 6px; }
-  </style>
-</head>
-<body>
-  <h1>Rosetta - IDML Translator</h1>
-  <p class="subtitle">Upload a .zip with one .idml file and a Links folder. Runs locally only.</p>
-
-  {% if error %}
-    <div class="error">{{ error }}</div>
-  {% endif %}
-
-  <form action="/upload" method="post" enctype="multipart/form-data">
-    <label class="field">
-      Upload zip
-      <input type="file" name="idml_zip" accept=".zip" required>
-      <div class="hint">Must contain exactly one .idml file and a Links folder.</div>
-    </label>
-
-    <label class="field">
-      Target language(s)
-      <div class="langs">
-        {% for code, name in languages.items() %}
-          <label><input type="checkbox" name="langs" value="{{ code }}"> {{ name }}</label>
-        {% endfor %}
+{% extends "base.html" %}
+{% block body_class %}page-home{% endblock %}
+{% block main %}
+<div class="wrap">
+  <section class="sheet hero-sheet" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <h1 id="hero-title">Translate InDesign documents into other languages</h1>
+      <p class="lede">Rosetta translates the live text in your <code>.idml</code> file, fits it back into the
+        original frames and sets Arabic right to left. Then it marks everything it changed or couldn't
+        settle, like a proof you check before print.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" type="submit" form="upload-form" name="sample" value="1" id="sample-button">
+          Try it with a sample lesson
+          <svg aria-hidden="true" viewBox="0 0 20 20" width="18" height="18"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p class="aside">No file needed. It runs a 3-page grade-4 math lesson
+          (<a href="/sample.zip">download it</a> to look inside).</p>
       </div>
-    </label>
+      <figure class="hero-proof" aria-label="A mark from the sample lesson's Spanish proof">
+        <div class="prow k-heading flag-fixed">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span><strong>Equivalent Fractions</strong></div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span><strong>Fracciones equivalentes</strong></div>
+          <div class="margin">
+            <p class="mnote fixed"><b><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><path d="M3 8h10M3 8l3-3M3 8l3 3M13 8l-3-3M13 8l-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Text size reduced 10% to fit</b>28pt to 25.2pt, so the Spanish title fits the sample's 300pt-wide title frame.</p>
+          </div>
+        </div>
+      </figure>
+    </div>
 
-    <button type="submit">Translate</button>
-  </form>
-</body>
-</html>
+    <form class="ticket" id="upload-form" action="/upload#upload-form" method="post" enctype="multipart/form-data" novalidate aria-labelledby="ticket-title">
+      <h2 id="ticket-title">Translate your document</h2>
+
+      {% if error %}
+      <div class="note note-error" role="alert" id="server-error">
+        <svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 5.5v5.5M10 14v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+      {% if paused_reason %}
+      <div class="note note-warn" role="status">
+        <svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20"><path d="M6.5 4v12M13.5 4v12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span>{{ paused_reason }}</span>
+      </div>
+      {% endif %}
+
+      <div class="field">
+        <span class="field-label caps" id="document-label">Document</span>
+        <label class="dropzone" id="dropzone" for="document-input">
+          <input type="file" id="document-input" name="document" accept=".idml,.zip" aria-labelledby="document-label" aria-describedby="document-hint document-error">
+          <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="26" height="26"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="dz-text"><strong>Drop an .idml or .zip here</strong><br>or <span class="link-like">choose a file</span></span>
+          <span class="dz-file" id="dz-file" hidden></span>
+        </label>
+        <p class="hint" id="document-hint">A .zip can include the Links folder. Up to {{ max_upload_mb }} MB{% if max_words %}, {{ "{:,}".format(max_words) }} words{% endif %}.</p>
+        <p class="field-error" id="document-error" role="alert" hidden></p>
+      </div>
+
+      <fieldset class="field">
+        <legend class="field-label caps">Translate into</legend>
+        <div class="chips" id="lang-chips">
+          {% for lang in languages %}
+          <label class="chip">
+            <input type="checkbox" name="langs" value="{{ lang.code }}" {% if lang.selected %}checked{% endif %}>
+            <span>{{ lang.name }}<small lang="{{ lang.code }}"{% if lang.rtl %} dir="rtl"{% endif %}>{{ lang.native }}</small></span>
+          </label>
+          {% endfor %}
+        </div>
+        <p class="field-error" id="langs-error" role="alert" hidden></p>
+      </fieldset>
+
+      <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit-button" {% if paused_reason %}disabled{% endif %}>
+        Translate document
+      </button>
+      <div class="upload-progress" id="upload-progress" hidden>
+        <div class="cmyk-bar"><span id="upload-bar"></span></div>
+        <p class="hint" id="upload-status">Uploading…</p>
+      </div>
+      <p class="fineprint">
+        {% if public_demo %}Free public demo{% if jobs_per_hour %}: {{ jobs_per_hour }} documents per hour{% endif %}. {% endif %}Text is translated by OpenAI. Files are deleted after {{ job_ttl_hours }} hours.
+      </p>
+    </form>
+
+    <div class="strip-row" aria-hidden="true">
+      <div class="strip">{% for i in range(48) %}<span></span>{% endfor %}</div>
+    </div>
+  </section>
+
+  <section class="sheet" id="how" aria-labelledby="proof-title">
+    <div class="slug caps">
+      <span>fractions_lesson.idml</span><span>Page 1</span><span>Spanish</span>
+    </div>
+    <div class="section-head">
+      <h2 id="proof-title">What comes back is a marked proof</h2>
+      <p>Original and translation side by side, page by page, in the document's reading order. Anything Rosetta
+        adjusted to fit is noted in the margin; anything it isn't sure about is highlighted for you to check.</p>
+    </div>
+    <div class="proof-demo">
+      <div class="proof">
+        <div class="proof-cols caps" aria-hidden="true"><span>English</span><span>Spanish</span><span>Margin</span></div>
+        <div class="prow k-small">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span><strong>Grade 4 Math · Fractions Unit · Lesson 7</strong></div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span><strong>Matemáticas de 4.º grado · Unidad de fracciones · Lección 7</strong></div>
+          <div class="margin"></div>
+        </div>
+        <div class="prow k-heading flag-fixed">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span><strong>Equivalent Fractions</strong></div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span><strong>Fracciones equivalentes</strong></div>
+          <div class="margin">
+            <p class="mnote fixed"><b><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><path d="M3 8h10M3 8l3-3M3 8l3 3M13 8l-3-3M13 8l-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Text size reduced 10% to fit</b>28pt to 25.2pt</p>
+          </div>
+        </div>
+        <div class="prow">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span>Imagine you and a friend each have a sandwich of the same size. You cut yours into <strong>2 equal parts</strong> and eat one part. Your friend cuts theirs into <strong>4 equal parts</strong> and eats two of them. Who ate more?</div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span>Imagina que tú y un amigo tienen cada uno un sándwich del mismo tamaño. Tú cortas el tuyo en <strong>2 partes iguales</strong> y te comes una parte. Tu amigo corta el suyo en <strong>4 partes iguales</strong> y come dos de ellas. ¿Quién comió más?</div>
+          <div class="margin"></div>
+        </div>
+        <div class="prow">
+          <div class="src" lang="en"><span class="lang-tag caps">English</span>Neither of you! You both ate <em>half</em> of a sandwich. Fractions that name the same amount are called <strong>equivalent fractions</strong>.</div>
+          <div class="dst" lang="es"><span class="lang-tag caps">Spanish</span>¡Ninguno de los dos! Ambos comieron <em>la mitad</em> de un sándwich. Las fracciones que nombran la misma cantidad se llaman <strong>fracciones equivalentes</strong>.</div>
+          <div class="margin">
+            <p class="mnote info"><b><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7v5M8 4.5v.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Much longer or shorter than the original</b>Worth a glance in InDesign to check the layout.</p>
+          </div>
+        </div>
+      </div>
+      <ul class="legend" aria-label="What the marks mean">
+        <li><strong class="mnote fixed"><b>Fixed to fit</b></strong>Re-wrapped, or made up to 15% smaller, using the font's real measurements and the frame's real size.</li>
+        <li><strong class="mnote review"><b>Check this</b></strong>Shortened to fit, translated inconsistently, or still too long. Highlighted in the translation.</li>
+        <li><strong class="mnote info"><b>Kept as-is</b></strong>Numbers, fractions and punctuation are never sent for translation.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="steps-title">
+    <div class="slug caps"><span id="steps-title">How it works</span><span>Seconds to a few minutes per document</span></div>
+    <ol class="steps">
+      <li><span class="num" aria-hidden="true">1</span><h3>Upload</h3><p>An <code>.idml</code> exported from InDesign (File › Export › InDesign Markup), or a <code>.zip</code> with its Links folder.</p></li>
+      <li><span class="num" aria-hidden="true">2</span><h3>Choose languages</h3><p>Spanish, French, German, Portuguese and Arabic. Arabic stories are set right to left with an Arabic font included.</p></li>
+      <li><span class="num" aria-hidden="true">3</span><h3>Check and download</h3><p>Read the marked proof in your browser, then download a package that opens in InDesign, plus a QA report.</p></li>
+    </ol>
+  </section>
+
+  <section class="sheet limits" aria-labelledby="limits-title">
+    <h2 id="limits-title">Before you rely on it</h2>
+    <ul>
+      <li>Translations are machine-made. The QA report checks that everything was translated, consistent and fits, not that the wording is right. Have a fluent speaker read it before print.</li>
+      <li>Your text is sent to OpenAI to be translated, so don't upload anything confidential unless that's acceptable to you.</li>
+      <li>Fit is measured per piece of text with open fonts that match your fonts' widths closely. InDesign's own line breaks can still differ slightly.</li>
+      <li>Rosetta has been tested on a limited set of documents. Unusual features such as footnotes or text on a path may not be handled.</li>
+    </ul>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='upload.js') }}" data-max-bytes="{{ max_upload_mb * 1024 * 1024 }}"></script>
+{% endblock %}

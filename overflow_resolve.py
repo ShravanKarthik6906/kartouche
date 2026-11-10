@@ -23,13 +23,18 @@ from overflow import StyleResolver, get_frame_geometry, resolve_overflow, retran
 
 def run_overflow_checks(db_path, document_id, idml_extracted_dir, target_languages,
                          api_key=None, model=None, dry_run=False,
-                         progress_callback=None, usage_callback=None):
+                         progress_callback=None, usage_callback=None, client=None):
     """
     progress_callback(fragments_done, fragments_total), if given, is called
     after each translated fragment is checked - UI progress only, optional.
     usage_callback is forwarded to retranslate_shorter for real token-usage
     reporting on tier-4 calls, optional.
+    client: OpenAI-compatible client to use instead of building one (only
+    needed if a tier-4 call actually happens). Errors from tier-4 calls that
+    would repeat on every call abort with llm.FatalAPIError; any other
+    failed tier-4 call leaves that fragment flagged for human review.
     """
+    import llm
     import os
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -48,14 +53,11 @@ def run_overflow_checks(db_path, document_id, idml_extracted_dir, target_languag
           AND tr.target_language IN ({})
     """.format(",".join("?" * len(target_languages))), target_languages).fetchall()
 
-    client = None
-    if not dry_run:
-        from openai import OpenAI
-        from translate import DEFAULT_MODEL, LANGUAGE_NAMES
-        client = OpenAI(api_key=api_key or os.environ.get("OPENAI_API_KEY"))
-        model = model or DEFAULT_MODEL
-    else:
-        from translate import LANGUAGE_NAMES
+    from translate import DEFAULT_MODEL, LANGUAGE_NAMES
+    model = model or DEFAULT_MODEL
+    if not dry_run and client is None:
+        # Built lazily: most documents never need a tier-4 call at all.
+        client = llm.LazyClient(lambda: llm.make_client(api_key))
 
     geo_cache = {}
     stats = {"fits": 0, "fits_wrapped": 0, "fits_shrunk": 0, "fits_retranslated": 0,
@@ -95,12 +97,22 @@ def run_overflow_checks(db_path, document_id, idml_extracted_dir, target_languag
             overage_pct = (result["detail"]["wrapped_height_pt"] / geo["frame_height_pt"] - 1) * 100
             overage_pct = max(overage_pct, 10)  # floor so the ask is never "0% shorter"
             stats["retranslate_calls"] += 1
-            retranslated_text = retranslate_shorter(
-                r["raw_text"], r["translated_text"], LANGUAGE_NAMES[r["target_language"]],
-                overage_pct, client, model, usage_callback=usage_callback
-            )
-            retry = resolve_overflow(retranslated_text, style["family"], style["font_style"],
-                                      style["point_size"], style["leading"], geo, r["target_language"])
+            try:
+                retranslated_text = retranslate_shorter(
+                    r["raw_text"], r["translated_text"], LANGUAGE_NAMES[r["target_language"]],
+                    overage_pct, client, model, usage_callback=usage_callback
+                )
+            except Exception as e:
+                if llm.is_fatal(e):
+                    conn.commit()
+                    conn.close()
+                    raise llm.FatalAPIError(e)
+                retranslated_text = None  # treated as "still too long" -> flagged below
+            if retranslated_text:
+                retry = resolve_overflow(retranslated_text, style["family"], style["font_style"],
+                                          style["point_size"], style["leading"], geo, r["target_language"])
+            else:
+                retry = result
             if retry["resolution"] != "unresolved":
                 result = {**retry, "resolution": "fits_retranslated"}
             else:
@@ -110,13 +122,14 @@ def run_overflow_checks(db_path, document_id, idml_extracted_dir, target_languag
             # it changes content, not just layout, unlike tiers 1-3.
             font_note = " (measured with a substitute font, not the real licensed one)" \
                 if "Substitute" in result["detail"].get("font_note", "") else ""
-            _insert_exception(
-                conn, document_id, r["target_language"], "overflow_retranslation_review", "MED",
-                f"text_run_id={r['id']} was retranslated for brevity to resolve a real measured "
-                f"layout overflow{font_note}. Original: {r['translated_text']!r}. "
-                f"Retranslated: {retranslated_text!r}. Please confirm meaning was preserved.",
-                [r["id"]]
-            )
+            if retranslated_text:
+                _insert_exception(
+                    conn, document_id, r["target_language"], "overflow_retranslation_review", "MED",
+                    f"text_run_id={r['id']} was retranslated for brevity to resolve a real measured "
+                    f"layout overflow{font_note}. Original: {r['translated_text']!r}. "
+                    f"Retranslated: {retranslated_text!r}. Please confirm meaning was preserved.",
+                    [r["id"]]
+                )
 
         stats[result["resolution"]] += 1
 
