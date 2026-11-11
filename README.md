@@ -42,8 +42,8 @@ German, Portuguese and Arabic are supported.
 Needs Python 3.11+ (developed on 3.13).
 
 ```bash
-git clone https://github.com/ShravanKarthik6906/rosetta-translator.git
-cd rosetta-translator
+git clone https://github.com/ShravanKarthik6906/kartouche.git
+cd kartouche
 python3 -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
