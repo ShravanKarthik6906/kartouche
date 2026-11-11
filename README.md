@@ -6,7 +6,7 @@ Upload an `.idml` file and get back a translated InDesign file you can open stra
 preview to check in your browser, and a QA report listing anything that needs a human eye. Spanish, French,
 German, Portuguese and Arabic are supported.
 
-**Try it:** [rosetta-translator.onrender.com](https://rosetta-translator.onrender.com) - click **Try it with a sample lesson**. (Free hosting: the first load may take up to a minute.)
+**Try it:** [kartouche.onrender.com](https://kartouche.onrender.com) - click **Try it with a sample lesson**. (Free hosting: the first load may take up to a minute.)
 
 ![Kartouche home page: upload card, language chips and a one-click sample](docs/screenshots/home.png)
 
@@ -42,8 +42,8 @@ German, Portuguese and Arabic are supported.
 Needs Python 3.11+ (developed on 3.13).
 
 ```bash
-git clone https://github.com/ShravanKarthik6906/rosetta-translator.git
-cd rosetta-translator
+git clone https://github.com/ShravanKarthik6906/kartouche.git
+cd kartouche
 python3 -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
