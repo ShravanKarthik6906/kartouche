@@ -135,7 +135,7 @@ def prepare_upload(upload_path: Path, original_filename: str, job_dir: Path) -> 
     links_dir = extracted_dir / "Links"
 
     if suffix == ".indd":
-        raise UploadError(f"Rosetta needs an .idml file, not an .indd file. {EXPORT_HINT}")
+        raise UploadError(f"Kartouche needs an .idml file, not an .indd file. {EXPORT_HINT}")
     if suffix not in (".idml", ".zip"):
         raise UploadError("Please upload an .idml file, or a .zip containing one .idml file "
                           "(and, optionally, its Links folder).")

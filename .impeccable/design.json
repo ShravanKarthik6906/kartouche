@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-11-10T15:20:00Z",
-  "title": "Design System: Rosetta",
+  "title": "Design System: Kartouche",
   "extensions": {
     "colorMeta": {
       "press-table": { "role": "neutral", "displayName": "Press Table Grey" },
@@ -46,7 +46,7 @@
   ],
   "narrative": {
     "northStar": "The Press Proof",
-    "overview": "Rosetta's output is a proof you check and sign off, so every screen is a press proof lying on the press table. Documents sit on white sheets with corner crop marks and a slug line; a CMYK control strip runs along the foot of the main sheet; whatever Rosetta changed or doubts is marked in the margin the way a proofreader marks a proof.",
+    "overview": "Kartouche's output is a proof you check and sign off, so every screen is a press proof lying on the press table. Documents sit on white sheets with corner crop marks and a slug line; a CMYK control strip runs along the foot of the main sheet; whatever Kartouche changed or doubts is marked in the margin the way a proofreader marks a proof.",
     "keyCharacteristics": [
       "Sheets on a table: content lives on white (or, in dark mode, graphite) sheets with crop marks, never in nested cards.",
       "Ink by job: black for text and actions, cyan for measurement and automatic fixes, pencil red for anything a person must check, yellow highlighter behind flagged text.",

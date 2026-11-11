@@ -1,5 +1,5 @@
 """
-Rosetta v3 - Stage 1: Deconstruct
+Kartouche - Stage 1: Deconstruct
 Parses an unzipped IDML package's Stories/*.xml files and stores every
 piece of live text (<Content>) into a SQLite database, preserving:
   - which story it came from
@@ -188,5 +188,5 @@ if __name__ == "__main__":
     import sys
     idml_dir = sys.argv[1] if len(sys.argv) > 1 else "idml_extracted"
     idml_name = sys.argv[2] if len(sys.argv) > 2 else "YourFile.idml"
-    db_path = sys.argv[3] if len(sys.argv) > 3 else "rosetta.db"
+    db_path = sys.argv[3] if len(sys.argv) > 3 else "kartouche.db"
     deconstruct(idml_dir, idml_name, db_path)

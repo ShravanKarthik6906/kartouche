@@ -2,7 +2,7 @@
 A stand-in for the OpenAI client, so the pipeline can be tested end to end
 without an API key or any spending.
 
-It answers the two kinds of prompts Rosetta sends:
+It answers the two kinds of prompts Kartouche sends:
   * translation (translate.call_openai_translate): keeps every <tN> tag and
     replaces the text inside it with a deterministic pseudo-translation;
   * shorten-for-layout (overflow.retranslate_shorter): returns a shorter

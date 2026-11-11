@@ -34,7 +34,7 @@
     const name = f.name.toLowerCase();
     let msg = null;
     if (name.endsWith(".indd")) {
-      msg = "Rosetta needs an .idml file, not .indd. In InDesign choose File › Export… › InDesign Markup (IDML).";
+      msg = "Kartouche needs an .idml file, not .indd. In InDesign choose File › Export… › InDesign Markup (IDML).";
     } else if (!name.endsWith(".idml") && !name.endsWith(".zip")) {
       msg = "Please choose an .idml file, or a .zip containing one.";
     } else if (f.size > maxBytes) {

@@ -1,5 +1,5 @@
 """
-The one place that defines which target languages Rosetta offers.
+The one place that defines which target languages Kartouche offers.
 
 Every other module (translation prompts, font measurement, right-to-left
 handling in reconstruction, the web UI, the preview) reads from here, so

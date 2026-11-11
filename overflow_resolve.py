@@ -1,5 +1,5 @@
 """
-Rosetta v3 - Stage 3b orchestration: run the full overflow-resolution
+Kartouche - Stage 3b orchestration: run the full overflow-resolution
 pipeline (see overflow.py for tier definitions) across every translated
 fragment in a document, store results in overflow_resolutions, and record
 exceptions for anything that needed retranslation (always, for human
@@ -195,7 +195,7 @@ def _insert_exception(conn, document_id, target_language, category, severity, de
 
 
 if __name__ == "__main__":
-    db_path = sys.argv[1] if len(sys.argv) > 1 else "rosetta.db"
+    db_path = sys.argv[1] if len(sys.argv) > 1 else "kartouche.db"
     document_id = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     idml_extracted_dir = sys.argv[3] if len(sys.argv) > 3 else "idml_extracted"
     langs = sys.argv[4].split(",") if len(sys.argv) > 4 else ["es", "ar"]

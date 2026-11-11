@@ -1,5 +1,5 @@
 """
-Generate Rosetta's built-in sample document: a short, original grade-4
+Generate Kartouche's built-in sample document: a short, original grade-4
 math lesson on equivalent fractions, as a real IDML package.
 
     python samples/make_sample.py
@@ -7,7 +7,7 @@ math lesson on equivalent fractions, as a real IDML package.
 Writes:
     samples/fractions_lesson/fractions_lesson.idml
     samples/fractions_lesson/Links/*.png
-    samples/fractions_lesson.zip          (ready to upload to Rosetta)
+    samples/fractions_lesson.zip          (ready to upload to Kartouche)
 
 Everything here (text, layout, art) is original and generated in code.
 The package structure follows Adobe's published IDML specification:
@@ -15,13 +15,13 @@ The package structure follows Adobe's published IDML specification:
 Resources/{Graphic,Fonts,Styles,Preferences}.xml, MasterSpreads/, Spreads/,
 Stories/, XML/{BackingStory,Tags}.xml.
 
-The lesson is built to exercise what Rosetta handles: headings, body text
+The lesson is built to exercise what Kartouche handles: headings, body text
 with bold/italic runs mid-sentence, a bulleted and a numbered list, a table,
 two callout boxes, one story threaded across two frames on two pages, a
 master-page footer with an automatic page number, and three linked images.
 
 The fonts are Arial (on every Mac and Windows machine), so the sample opens
-cleanly in InDesign. Rosetta measures it with Liberation Sans, which has
+cleanly in InDesign. Kartouche measures it with Liberation Sans, which has
 the same metrics as Arial.
 
 Output is deterministic (fixed zip timestamps, no randomness), so

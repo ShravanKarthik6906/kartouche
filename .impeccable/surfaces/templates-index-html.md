@@ -5,7 +5,7 @@ primary_target: "templates/index.html"
 related_targets: ["templates/job.html","templates/missing.html","templates/base.html"]
 ---
 
-# Rosetta web UI (home, job progress, results, error states)
+# Kartouche web UI (home, job progress, results, error states)
 
 Scope: every page the Flask app serves (templates/*.html, static/*). Home is Persuade (an evaluator decides to try it); the job and results screens are Operate (watch a run, check a translation, download). One visual world for all of them.
 
@@ -15,9 +15,9 @@ Constraints: Flask + Jinja + plain JS, strict CSP (no inline style or script), s
 
 ## Direction contract
 
-THESIS: Rosetta's output is a proof you check and sign off. Every screen is a press proof on the press table: the document sits on a sheet with crop marks and a slug line, and everything Rosetta changed or doubts is marked in the margin like a proofreader's pencil. It refuses the SaaS default: a gradient hero, a row of equal feature cards, and dashboard metric tiles.
+THESIS: Kartouche's output is a proof you check and sign off. Every screen is a press proof on the press table: the document sits on a sheet with crop marks and a slug line, and everything Kartouche changed or doubts is marked in the margin like a proofreader's pencil. It refuses the SaaS default: a gradient hero, a row of equal feature cards, and dashboard metric tiles.
 
-OWN-WORLD: Neutral grey press-table ground, white proof sheets with corner crop marks, a CMYK control strip, a registration-target mark beside the Rosetta wordmark. Colour by process ink and job: K (ink black) for text and primary buttons, M-red pencil for "needs review" marks, C for measurements, links and fit fixes, Y highlighter behind flagged text. Archivo throughout: wide, heavy headlines; condensed caps for slug lines and labels; the document's own sans (Liberation/Arial) for document text in the preview.
+OWN-WORLD: Neutral grey press-table ground, white proof sheets with corner crop marks, a CMYK control strip, a registration-target mark beside the Kartouche wordmark. Colour by process ink and job: K (ink black) for text and primary buttons, M-red pencil for "needs review" marks, C for measurements, links and fit fixes, Y highlighter behind flagged text. Archivo throughout: wide, heavy headlines; condensed caps for slug lines and labels; the document's own sans (Liberation/Arial) for document text in the preview.
 
 STORY: The visitor sees the tool's actual output form (a marked proof) before reading a claim, learns that it translates the live text and fits it back into the frames, and acts: try the sample, or upload. On the job screens they watch the strip fill, then read the proof, check the marked items, and download.
 

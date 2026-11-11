@@ -1,5 +1,5 @@
 """
-Rosetta v3 - Stage 3b: Overflow handling
+Kartouche - Stage 3b: Overflow handling
 
 For each translated fragment, checks whether the translated text actually
 fits in its real InDesign frame, using REAL font metrics (via HarfBuzz
@@ -46,7 +46,7 @@ FONTS_ASSET_DIR = Path(__file__).parent / "fonts"
 
 # (font_family, font_style) -> (file_path, font_number | None for a plain
 # .ttf/.otf, or the face index within a .ttc collection). Covers the
-# commercial text faces Rosetta has been used with, plus faces whose
+# commercial text faces Kartouche has been used with, plus faces whose
 # metrics are matched exactly (Arial) and the bundled fonts themselves.
 # Symbol/dingbat fonts are not listed: they never carry translatable text.
 #

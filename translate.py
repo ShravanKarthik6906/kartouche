@@ -1,5 +1,5 @@
 """
-Rosetta v3 - Stage 2: Translate
+Kartouche - Stage 2: Translate
 
 *** LIVE PAID API CALL WARNING ***
 translate_document() and call_openai_translate() below hit the real OpenAI
@@ -41,13 +41,16 @@ from dotenv import load_dotenv
 import languages
 import llm
 
-# Load secrets (OPENAI_API_KEY, ROSETTA_OPENAI_MODEL) from .env.
+# Load secrets (OPENAI_API_KEY, KARTOUCHE_OPENAI_MODEL) from .env.
 # This is intentionally only done here in translate.py - the API key is
 # scoped to the translation step only and must never be read/used by
 # any other script.
 load_dotenv()
 
-DEFAULT_MODEL = os.environ.get("ROSETTA_OPENAI_MODEL", "gpt-4o")
+# KARTOUCHE_OPENAI_MODEL; the pre-rename ROSETTA_OPENAI_MODEL is still read as a
+# fallback so an existing deployment keeps its model until its settings are updated.
+DEFAULT_MODEL = (os.environ.get("KARTOUCHE_OPENAI_MODEL") or os.environ.get("ROSETTA_OPENAI_MODEL")
+                 or "gpt-4o")
 
 TAG_RE = re.compile(r"<t(\d+)>(.*?)</t\1>", re.DOTALL)
 
@@ -334,7 +337,7 @@ if __name__ == "__main__":
     # *** Running this file makes LIVE, BILLED API calls unless --dry-run is
     # passed. Don't invoke it just to "check something" - use --dry-run or
     # scope with --story-id/--paragraph-seq/--limit first. ***
-    db_path = sys.argv[1] if len(sys.argv) > 1 else "rosetta.db"
+    db_path = sys.argv[1] if len(sys.argv) > 1 else "kartouche.db"
     document_id = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     dry_run = "--dry-run" in sys.argv
 

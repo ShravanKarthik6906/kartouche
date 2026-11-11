@@ -1,5 +1,5 @@
 """
-Builds the in-browser preview of a finished job from its rosetta.db: the
+Builds the in-browser preview of a finished job from its kartouche.db: the
 original and translated text side by side, grouped by page and story in
 reading order, with bold/italic runs, tables, and every fix or flag the
 pipeline recorded. Also produces the per-language summary numbers.

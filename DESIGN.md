@@ -1,5 +1,5 @@
 ---
-name: Rosetta
+name: Kartouche
 description: A press proof for translated InDesign documents - sheets on a press table, marked like a proofreader would.
 colors:
   press-table: "#d9dad6"
@@ -110,13 +110,13 @@ components:
     padding: "18px"
 ---
 
-# Design System: Rosetta
+# Design System: Kartouche
 
 ## Overview
 
 **Creative North Star: "The Press Proof"**
 
-Rosetta's output is a proof you check and sign off, so every screen is a press proof lying on the press table. Documents sit on white sheets with corner crop marks and a slug line; a CMYK control strip runs along the foot of the main sheet; whatever Rosetta changed or doubts is marked in the margin the way a proofreader marks a proof. The world is print-shop practical, not nostalgic: flat sheets, hairline rules, process inks used for their jobs, and one confident wide grotesque.
+Kartouche's output is a proof you check and sign off, so every screen is a press proof lying on the press table. Documents sit on white sheets with corner crop marks and a slug line; a CMYK control strip runs along the foot of the main sheet; whatever Kartouche changed or doubts is marked in the margin the way a proofreader marks a proof. The world is print-shop practical, not nostalgic: flat sheets, hairline rules, process inks used for their jobs, and one confident wide grotesque.
 
 It refuses the generic SaaS template: no gradient hero, no row of equal icon cards, no dashboard metric tiles, no glow.
 
@@ -197,7 +197,7 @@ There are no cards; there are sheets (see Layout). Notes inside sheets are ruled
 The dropzone is a dashed well on Sheet Sunk that turns cyan on hover or drag and solid ink once a file is chosen; field labels are condensed caps; errors appear under their field in pencil red.
 
 ### Navigation
-A bare header on the table: the registration-target mark and the Rosetta wordmark (Archivo, wide), and three text links with 44px targets.
+A bare header on the table: the registration-target mark and the Kartouche wordmark (Archivo, wide), and three text links with 44px targets.
 
 ### Control strip and progress
 The CMYK control strip (100%, 50% and 25% tints of C, M, Y, K) runs along the foot of the main home sheet. On the job page the same strip is the progress bar: patches fill left to right as the job advances. Finished steps get a drawn tick once; the current step shows a cyan caret that pulses gently.

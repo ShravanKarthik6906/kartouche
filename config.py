@@ -45,7 +45,10 @@ class Settings:
         # The password gate only applies in private mode.
         self.site_password = None if self.public_demo else (os.environ.get("SITE_PASSWORD") or None)
 
-        self.data_dir = Path(os.environ.get("ROSETTA_DATA_DIR") or ROOT / "webapp_jobs")
+        # KARTOUCHE_DATA_DIR; the pre-rename ROSETTA_DATA_DIR is still read as a fallback
+        # so an existing deployment keeps working until its settings are updated.
+        self.data_dir = Path(os.environ.get("KARTOUCHE_DATA_DIR") or os.environ.get("ROSETTA_DATA_DIR")
+                             or ROOT / "webapp_jobs")
         self.max_upload_mb = _float("MAX_UPLOAD_MB", 50)
         self.job_ttl_hours = _float("JOB_TTL_HOURS", 24)
 

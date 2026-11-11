@@ -1,4 +1,4 @@
-# Rosetta
+# Kartouche
 
 **Translate Adobe InDesign documents into other languages, with the formatting, layout and right-to-left text taken care of.**
 
@@ -8,7 +8,7 @@ German, Portuguese and Arabic are supported.
 
 **Try it:** [rosetta-translator.onrender.com](https://rosetta-translator.onrender.com) - click **Try it with a sample lesson**. (Free hosting: the first load may take up to a minute.)
 
-![Rosetta home page: upload card, language chips and a one-click sample](docs/screenshots/home.png)
+![Kartouche home page: upload card, language chips and a one-click sample](docs/screenshots/home.png)
 
 <table>
 <tr>
@@ -24,9 +24,9 @@ German, Portuguese and Arabic are supported.
 ## What it does
 
 - **Keeps the formatting.** A sentence often spans several differently styled runs (a **bold** word, an
-  *italic* phrase). Rosetta translates the whole sentence at once, with numbered tags around each run, so the
+  *italic* phrase). Kartouche translates the whole sentence at once, with numbered tags around each run, so the
   grammar is right and the styling lands on the right words. Numbers and punctuation are never sent to the model.
-- **Fits the layout.** Translations usually run 20-35% longer than English. Rosetta measures the translated
+- **Fits the layout.** Translations usually run 20-35% longer than English. Kartouche measures the translated
   text with real font metrics (HarfBuzz shaping) against each frame's real geometry from the IDML. When text
   doesn't fit, it re-wraps it, then tries a small, controlled font-size reduction, then asks the model for a
   shorter wording. If none of that works, it flags the text for a person instead of leaving a broken layout.
@@ -95,7 +95,7 @@ All settings are environment variables (or `.env`), documented in [`.env.example
 | Variable | Default | What it does |
 |---|---|---|
 | `OPENAI_API_KEY` | (none) | Required to translate your own files. |
-| `ROSETTA_OPENAI_MODEL` | `gpt-4o` | Translation model (`gpt-5-mini` on Render). |
+| `KARTOUCHE_OPENAI_MODEL` | `gpt-4o` | Translation model (`gpt-5-mini` on Render). |
 | `SITE_PASSWORD` | (none) | Private mode password. Ignored in public mode. |
 | `PUBLIC_DEMO` | `false` | Open access with the limits below. |
 | `DAILY_SPEND_CAP_USD` | `2` (public) | Max OpenAI spend per UTC day. |
@@ -107,9 +107,12 @@ All settings are environment variables (or `.env`), documented in [`.env.example
 | `JOB_TTL_HOURS` | `24` | Files and results are deleted after this. |
 | `OPENAI_TIMEOUT_SECONDS` / `OPENAI_MAX_RETRIES` | `90` / `3` | Per-request timeout and automatic retries. |
 | `TRANSLATE_CONCURRENCY` | `4` | Paragraphs translated in parallel. |
-| `ROSETTA_DATA_DIR` | `./webapp_jobs` | Where jobs and app state are stored. |
+| `KARTOUCHE_DATA_DIR` | `./webapp_jobs` | Where jobs and app state are stored. |
 
 In private mode the limits default to off (`0`), but any of them can be set explicitly.
+
+The names used before the rename, `ROSETTA_OPENAI_MODEL` and `ROSETTA_DATA_DIR`, are still read when the new
+`KARTOUCHE_` names aren't set, so an existing deployment keeps working while its settings are updated.
 
 ## Architecture
 
@@ -120,7 +123,7 @@ In private mode the limits default to off (`0`), but any of them can be set expl
   [ web app: app.py ]  validate upload (uploads.py), start a background job (pipeline.py),
          |             persist job state (jobs.py), enforce demo limits (limits.py)
          v
-  1. Read                 deconstruct.py      every <Content> fragment + style -> SQLite (rosetta.db)
+  1. Read                 deconstruct.py      every <Content> fragment + style -> SQLite (kartouche.db)
   2. Find text on pages   story_placements.py map stories to pages/frames from Spreads XML
   3. Translate            translate.py        tagged whole-sentence translation      [OpenAI]
   4. Fit to the layout    overflow.py         measure (HarfBuzz + real frame geometry)
@@ -141,17 +144,17 @@ Supporting modules: `languages.py` (the single list of languages: names, directi
 messages), `config.py` (settings), `state.py` (app state database), `idml_check.py` (structural IDML
 validator, also a CLI).
 
-Every stage reads and writes the same `rosetta.db`, so each can also be run on its own from the command line:
+Every stage reads and writes the same `kartouche.db`, so each can also be run on its own from the command line:
 
 ```bash
 mkdir idml_extracted && unzip YourFile.idml -d idml_extracted/
-python deconstruct.py idml_extracted/ YourFile.idml rosetta.db
-python story_placements.py rosetta.db 1 idml_extracted/
-python translate.py rosetta.db 1 --dry-run                # no API calls
-python translate.py rosetta.db 1 --langs=es,ar            # real, billed calls
-python overflow_resolve.py rosetta.db 1 idml_extracted/ es,ar
-python exception_checks.py rosetta.db 1 es,ar
-python reconstruct.py rosetta.db 1 es idml_extracted/ idml_work_copy_es
+python deconstruct.py idml_extracted/ YourFile.idml kartouche.db
+python story_placements.py kartouche.db 1 idml_extracted/
+python translate.py kartouche.db 1 --dry-run                # no API calls
+python translate.py kartouche.db 1 --langs=es,ar            # real, billed calls
+python overflow_resolve.py kartouche.db 1 idml_extracted/ es,ar
+python exception_checks.py kartouche.db 1 es,ar
+python reconstruct.py kartouche.db 1 es idml_extracted/ idml_work_copy_es
 python idml_check.py idml_work_copy_es/../YourFile_es.idml
 ```
 
@@ -192,7 +195,7 @@ checks them):
 
 ## Known limitations
 
-An honest list. Please read it before relying on Rosetta for anything important.
+An honest list. Please read it before relying on Kartouche for anything important.
 
 - **Translations are machine-generated.** The QA report checks completeness, consistency and fit, not
   linguistic quality. Have a fluent speaker review before publishing.
@@ -215,7 +218,7 @@ An honest list. Please read it before relying on Rosetta for anything important.
 - **Jobs run inside the web process.** A restart interrupts running jobs (they're shown as interrupted, not
   lost), and the app must run with a single worker.
 - **The prompt assumes educational material.** It describes the text as a K-12 math worksheet, which suits
-  the documents Rosetta was built for. Other kinds of documents still translate well, but the prompt could
+  the documents Kartouche was built for. Other kinds of documents still translate well, but the prompt could
   be made configurable.
 
 ## License

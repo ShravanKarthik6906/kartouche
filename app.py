@@ -1,5 +1,5 @@
 """
-Rosetta web app.
+Kartouche web app.
 
 A thin Flask layer over the pipeline: it validates uploads (uploads.py),
 runs the pipeline in a background thread (pipeline.py), keeps job state on
@@ -38,7 +38,7 @@ from pipeline import JobRunner
 from state import StateDB
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-log = logging.getLogger("rosetta.app")
+log = logging.getLogger("kartouche.app")
 
 ROOT = Path(__file__).resolve().parent
 FONT_FILES = {"Inter-Regular.ttf", "Inter-Medium.ttf", "Inter-Bold.ttf",
@@ -66,7 +66,7 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
     ledger = limits.SpendLedger(db, s.daily_spend_cap_usd)
     limiter = limits.RateLimiter(db)
     model = translate.DEFAULT_MODEL
-    app.extensions["rosetta"] = {"db": db, "store": store, "ledger": ledger, "limiter": limiter}
+    app.extensions["kartouche"] = {"db": db, "store": store, "ledger": ledger, "limiter": limiter}
 
     def cleanup():
         try:
@@ -82,7 +82,7 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
             while True:
                 time.sleep(CLEANUP_INTERVAL_SECONDS)
                 cleanup()
-        threading.Thread(target=loop, daemon=True, name="rosetta-cleanup").start()
+        threading.Thread(target=loop, daemon=True, name="kartouche-cleanup").start()
 
     # ------------------------------------------------------------ access + headers
 
@@ -92,7 +92,7 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
             return None
         auth = request.authorization
         if not auth or auth.password != s.site_password:
-            return Response("Authentication required.", 401, {"WWW-Authenticate": 'Basic realm="Rosetta"'})
+            return Response("Authentication required.", 401, {"WWW-Authenticate": 'Basic realm="Kartouche"'})
         return None
 
     @app.after_request
@@ -174,7 +174,7 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
 
     @app.route("/sample.zip")
     def sample_download():
-        return send_file(s.sample_zip, as_attachment=True, download_name="rosetta_sample_fractions_lesson.zip")
+        return send_file(s.sample_zip, as_attachment=True, download_name="kartouche_sample_fractions_lesson.zip")
 
     @app.route("/fonts/<name>")
     def fonts(name):
@@ -201,7 +201,7 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
                 return fail(f"You've reached this demo's limit of {limit} {what} per hour. "
                             f"Please try again in about {mins} minute{'s' if mins != 1 else ''}.", 429)
             if store.running_count() >= s.max_concurrent_jobs:
-                return fail("Rosetta is busy with other translations right now. Please try again in a minute.", 503)
+                return fail("Kartouche is busy with other translations right now. Please try again in a minute.", 503)
 
         if not is_sample:
             paused = uploads_paused_reason()
@@ -235,7 +235,7 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
         if s.max_words and prepared.word_count > s.max_words and not is_sample:
             shutil.rmtree(job_dir, ignore_errors=True)
             return fail(f"This document has about {prepared.word_count:,} words to translate. The public demo "
-                        f"accepts up to {s.max_words:,} words per document. Rosetta is open source, so you can "
+                        f"accepts up to {s.max_words:,} words per document. Kartouche is open source, so you can "
                         f"run it yourself for larger documents.", 413, field="document")
 
         notices = []
@@ -269,15 +269,15 @@ def create_app(settings=None, openai_factory=None, start_cleanup_thread=True):
         runner = JobRunner(store, job_id, job_dir=job_dir, extracted_dir=prepared.extracted_dir,
                            idml_filename=prepared.idml_filename, langs=langs, client=client, model=model,
                            on_usage=on_usage, public=s.public_demo, is_sample=is_sample)
-        app.extensions["rosetta"].setdefault("runners", {})[job_id] = runner
+        app.extensions["kartouche"].setdefault("runners", {})[job_id] = runner
 
         def run():
             try:
                 runner.run()
             finally:
-                app.extensions["rosetta"]["runners"].pop(job_id, None)
+                app.extensions["kartouche"]["runners"].pop(job_id, None)
 
-        threading.Thread(target=run, daemon=True, name=f"rosetta-job-{job_id}").start()
+        threading.Thread(target=run, daemon=True, name=f"kartouche-job-{job_id}").start()
         target = url_for("job_page", job_id=job_id)
         if wants_json():
             return jsonify({"job_url": target})
@@ -413,5 +413,5 @@ app = create_app()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    print(f"Rosetta is running: open http://127.0.0.1:{port}")
+    print(f"Kartouche is running: open http://127.0.0.1:{port}")
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)

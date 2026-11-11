@@ -1,5 +1,5 @@
 """
-Rosetta v3 - Stage 4b: Exception report
+Kartouche - Stage 4b: Exception report
 Runs three data-quality checks against translated content for a given
 document + target_language and records findings in `exceptions` /
 `exception_fragments`:
@@ -231,7 +231,7 @@ def run_all_checks(db_path, document_id, target_languages, progress_callback=Non
 
 
 if __name__ == "__main__":
-    db_path = sys.argv[1] if len(sys.argv) > 1 else "rosetta.db"
+    db_path = sys.argv[1] if len(sys.argv) > 1 else "kartouche.db"
     document_id = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     langs = sys.argv[3].split(",") if len(sys.argv) > 3 else ["es", "ar"]
 

@@ -2,7 +2,7 @@
 A small SQLite database for web-app state that must survive a page refresh
 or a server restart: jobs, the daily spending ledger and rate-limit events.
 (The per-document translation data lives separately, in each job's own
-rosetta.db.)
+kartouche.db.)
 """
 
 import sqlite3

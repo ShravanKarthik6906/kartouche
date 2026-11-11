@@ -21,7 +21,7 @@ services:
         sync: false
       - key: PUBLIC_DEMO          # "true" opens the site to everyone, with the limits below
         sync: false
-      - key: ROSETTA_OPENAI_MODEL
+      - key: KARTOUCHE_OPENAI_MODEL
         value: gpt-5-mini
       # Public-demo safety limits (see .env.example for what each does).
       - key: DAILY_SPEND_CAP_USD

@@ -449,12 +449,12 @@
       const failed = job.langs.filter((l) => !job.results[l]).map((l) => job.languages[l].name);
       $("job-sub").textContent = "Translated into " + joinNames(okNames) + took +
         (failed.length ? ". " + joinNames(failed) + (failed.length > 1 ? " didn't" : " didn't") + " finish: see the tab for why." : "");
-      document.title = "Done: " + job.source_name + ": Rosetta";
+      document.title = "Done: " + job.source_name + ": Kartouche";
       await loadPreview();
       renderResults(job);
     } else {
       $("job-sub").textContent = "Couldn't finish translating into " + joinNames(names);
-      document.title = "Didn't finish: " + job.source_name + ": Rosetta";
+      document.title = "Didn't finish: " + job.source_name + ": Kartouche";
       renderError(job);
     }
   }

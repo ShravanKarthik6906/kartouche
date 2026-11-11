@@ -1,5 +1,5 @@
 """
-Rosetta v3 - Stage 3: Reconstruct
+Kartouche - Stage 3: Reconstruct
 For a given document_id and target_language:
   1. Makes a fresh copy of the extracted IDML folder (never mutates the
      original extracted folder).
@@ -148,7 +148,7 @@ def ensure_font_family_declared(fonts_xml_path: Path, family_name: str, style_na
                 and family.get("Name") == family_name:
             return  # already declared
 
-    family_self = f"RosettaFont_{family_name.replace(' ', '')}"
+    family_self = f"KartoucheFont_{family_name.replace(' ', '')}"
     family_elem = etree.Element("FontFamily", Self=family_self, Name=family_name)
     for style_name in style_names:
         font_elem = etree.SubElement(
@@ -475,7 +475,7 @@ def reconstruct(db_path: str, document_id: int, target_language: str,
 
 
 if __name__ == "__main__":
-    db_path = sys.argv[1] if len(sys.argv) > 1 else "rosetta.db"
+    db_path = sys.argv[1] if len(sys.argv) > 1 else "kartouche.db"
     document_id = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     target_language = sys.argv[3] if len(sys.argv) > 3 else "es"
     idml_extracted_dir = sys.argv[4] if len(sys.argv) > 4 else "idml_extracted"
