@@ -3,7 +3,7 @@ Job state for the web app: kept in memory while a job runs and written to
 the state database, so a page refresh or a server restart shows the real
 state instead of a 404.
 
-Rosetta runs jobs in background threads of a single server process, so any
+Kartouche runs jobs in background threads of a single server process, so any
 job still marked "running" when the process starts was cut off by a restart
 and is marked "interrupted". (This is why render.yaml runs one worker.)
 """

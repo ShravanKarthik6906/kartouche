@@ -18,11 +18,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # load_dotenv() from reading .env at all, then clear anything already exported.
 import dotenv  # noqa: E402
 dotenv.load_dotenv = lambda *args, **kwargs: False
-for var in ("OPENAI_API_KEY", "SITE_PASSWORD", "PUBLIC_DEMO", "ROSETTA_DATA_DIR", "DAILY_SPEND_CAP_USD",
+for var in ("OPENAI_API_KEY", "SITE_PASSWORD", "PUBLIC_DEMO", "KARTOUCHE_DATA_DIR", "ROSETTA_DATA_DIR", "ROSETTA_OPENAI_MODEL", "DAILY_SPEND_CAP_USD",
             "RATE_LIMIT_JOBS_PER_HOUR", "RATE_LIMIT_SAMPLES_PER_HOUR", "MAX_WORDS_PER_JOB", "MAX_UPLOAD_MB",
             "MAX_CONCURRENT_JOBS", "JOB_TTL_HOURS", "SAMPLE_CACHE_PATH"):
     os.environ.pop(var, None)
-os.environ["ROSETTA_OPENAI_MODEL"] = "gpt-5-mini"   # a model with configured pricing
+os.environ["KARTOUCHE_OPENAI_MODEL"] = "gpt-5-mini"   # a model with configured pricing
 os.environ.setdefault("TRANSLATE_CONCURRENCY", "4")
 
 from fake_openai import FakeOpenAI  # noqa: E402
@@ -74,12 +74,12 @@ def make_app(make_settings):
 
 
 def wait_for_job(application, job_id, timeout=90):
-    store = application.extensions["rosetta"]["store"]
+    store = application.extensions["kartouche"]["store"]
     deadline = time.time() + timeout
     while time.time() < deadline:
         job = store.get(job_id)
         if job and job["status"] not in ("queued", "running") and job_id not in \
-                application.extensions["rosetta"].get("runners", {}):
+                application.extensions["kartouche"].get("runners", {}):
             return job
         time.sleep(0.1)
     raise AssertionError(f"job {job_id} did not finish in {timeout}s")

@@ -1,4 +1,4 @@
-/* Rosetta - "proof sheet" design system. One stylesheet, no build step.
+/* Kartouche - "proof sheet" design system. One stylesheet, no build step.
    Every colour, size and duration is a custom property on :root; themes
    only redefine tokens. Process-ink roles: K = text and primary actions,
    pencil (magenta-red) = needs review, cyan = measurements, links and

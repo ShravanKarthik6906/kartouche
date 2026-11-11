@@ -1,10 +1,10 @@
 """
-Runs the Rosetta pipeline for one web job, in a background thread, and
+Runs the Kartouche pipeline for one web job, in a background thread, and
 reports progress into the job store. Calls the same stage functions as the
 command-line workflow; no translation or layout logic lives here.
 
 Steps (as the visitor sees them):
-  read      deconstruct.py         - unpack the text into rosetta.db
+  read      deconstruct.py         - unpack the text into kartouche.db
   find      story_placements.py    - which page/frame each story is on
   translate translate.py           - one language at a time
   fit       overflow_resolve.py    - measure fit, wrap/shrink/shorten
@@ -37,7 +37,7 @@ import story_placements
 import translate
 from jobs import STEPS
 
-log = logging.getLogger("rosetta.pipeline")
+log = logging.getLogger("kartouche.pipeline")
 
 STEP_LABELS = {k: label for k, label, _w in STEPS}
 
@@ -91,7 +91,7 @@ class JobRunner:
         self.on_usage = on_usage
         self.public = public
         self.is_sample = is_sample
-        self.db_path = str(self.job_dir / "rosetta.db")
+        self.db_path = str(self.job_dir / "kartouche.db")
         self.failed = {}          # lang -> error dict
         self.notices = []
 

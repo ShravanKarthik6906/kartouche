@@ -1,4 +1,4 @@
--- Rosetta v3 schema: IDML live-text translation pipeline
+-- Kartouche schema: IDML live-text translation pipeline
 
 CREATE TABLE documents (
     id INTEGER PRIMARY KEY,

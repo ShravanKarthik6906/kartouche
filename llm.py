@@ -171,7 +171,7 @@ ERROR_MESSAGES = {
                    "The server couldn't connect to OpenAI. Please try again in a few minutes."),
     "model": ("The translation model isn't available",
               "The configured model isn't available to this OpenAI account. If you run this site, check "
-              "ROSETTA_OPENAI_MODEL."),
+              "KARTOUCHE_OPENAI_MODEL."),
     "unknown": ("Something went wrong while translating",
                 "An unexpected error occurred. Please try again; if it keeps happening, the technical details "
                 "below will help whoever runs this site."),

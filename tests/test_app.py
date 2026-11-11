@@ -52,7 +52,7 @@ def test_sample_end_to_end_and_downloads(make_app):
 
     view = client.get(f"/api/job/{jid}").get_json()
     assert view["progress"] == 1.0 and all(s["state"] == "done" for s in view["steps"])
-    assert "rosetta.db" not in json.dumps(view)  # no server paths leak
+    assert "kartouche.db" not in json.dumps(view)  # no server paths leak
     for lang in ("es", "ar"):
         dl = view["results"][lang]["downloads"]
         pkg = client.get(dl["package"])
@@ -102,7 +102,7 @@ def test_unknown_and_expired_jobs(make_app):
 def test_restart_marks_running_jobs_interrupted(make_app, make_settings):
     import app as appmod
     app, client, _ = make_app()
-    store = app.extensions["rosetta"]["store"]
+    store = app.extensions["kartouche"]["store"]
     store.create("stuck", langs=["es"], source_name="x.idml")
     store.update("stuck", status="running", force=True)
     # A new process starting against the same data directory:
@@ -116,7 +116,7 @@ def test_cleanup_removes_old_jobs(make_app):
     app, client, _ = make_app()
     jid = job_id(start(client, sample=True))
     wait_for_job(app, jid)
-    store = app.extensions["rosetta"]["store"]
+    store = app.extensions["kartouche"]["store"]
     store.db.execute("UPDATE jobs SET created_at = ? WHERE id = ?", (time.time() - 48 * 3600, jid))
     assert store.cleanup(24) == 1
     assert store.get(jid) is None and not store.job_dir(jid).exists()
@@ -167,7 +167,7 @@ def test_spending_cap_pauses_uploads_but_sample_still_works(make_app):
     # Warm the sample cache while there's budget left; real spend is recorded.
     first = wait_for_job(app, job_id(start(client, sample=True)))
     assert first["status"] == "done"
-    ledger = app.extensions["rosetta"]["ledger"]
+    ledger = app.extensions["kartouche"]["ledger"]
     assert 0 < ledger.spent() < 1 and not ledger.cap_reached()
     ledger.add(1.0)  # the rest of today's budget gets used by other visitors
     assert ledger.cap_reached()

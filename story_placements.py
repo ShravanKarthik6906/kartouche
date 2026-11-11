@@ -1,5 +1,5 @@
 """
-Rosetta v3 - Stage 4a: Story placements
+Kartouche - Stage 4a: Story placements
 Parses Spreads/*.xml to work out which page and frame each story actually
 appears on, and stores the result in story_placements.
 
@@ -226,7 +226,7 @@ def populate_story_placements(db_path: str, document_id: int, idml_extracted_dir
 
 
 if __name__ == "__main__":
-    db_path = sys.argv[1] if len(sys.argv) > 1 else "rosetta.db"
+    db_path = sys.argv[1] if len(sys.argv) > 1 else "kartouche.db"
     document_id = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     idml_extracted_dir = sys.argv[3] if len(sys.argv) > 3 else "idml_extracted"
     populate_story_placements(db_path, document_id, idml_extracted_dir)

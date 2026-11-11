@@ -10,7 +10,7 @@ web
 
 A mix of three audiences, confirmed by the owner:
 
-- **Evaluators**: people at a company deciding whether Rosetta is worth adopting. They arrive cold, usually without an InDesign file to hand, and need to understand what it does within seconds and judge a real result in the browser.
+- **Evaluators**: people at a company deciding whether Kartouche is worth adopting. They arrive cold, usually without an InDesign file to hand, and need to understand what it does within seconds and judge a real result in the browser.
 - **Production / localization staff**: people at publishers or schools who need InDesign documents in other languages and check the output before it goes to print. They come back repeatedly and work through flagged items.
 - **InDesign designers**: designers or agencies who know InDesign well, open the translated file, and fix the remaining layout details themselves.
 
@@ -18,11 +18,11 @@ Design for the evaluator's first visit, and keep the progress and results screen
 
 ## Product Purpose
 
-Rosetta translates the live text inside Adobe InDesign `.idml` files into other languages (Spanish, French, German, Portuguese, Arabic) while keeping the formatting, fitting the translated text back into the layout, setting Arabic right-to-left, and producing a QA report. Success means a person can upload a file (or try the built-in sample), watch it run, compare original and translation side by side in the browser, and download a file that opens in InDesign, knowing exactly what was adjusted and what still needs a human.
+Kartouche translates the live text inside Adobe InDesign `.idml` files into other languages (Spanish, French, German, Portuguese, Arabic) while keeping the formatting, fitting the translated text back into the layout, setting Arabic right-to-left, and producing a QA report. Success means a person can upload a file (or try the built-in sample), watch it run, compare original and translation side by side in the browser, and download a file that opens in InDesign, knowing exactly what was adjusted and what still needs a human.
 
 ## Positioning
 
-Rosetta works inside the document's own structure rather than on extracted text. It translates whole sentences with the formatting runs tagged so bold and italic land on the right words. It measures translated text with real font metrics against each frame's real geometry, then re-wraps, shrinks slightly, or shortens the wording, and flags what it cannot fit instead of hiding it. It returns an InDesign file, not a document in another format.
+Kartouche works inside the document's own structure rather than on extracted text. It translates whole sentences with the formatting runs tagged so bold and italic land on the right words. It measures translated text with real font metrics against each frame's real geometry, then re-wraps, shrinks slightly, or shortens the wording, and flags what it cannot fit instead of hiding it. It returns an InDesign file, not a document in another format.
 
 ## Operating Context
 
@@ -42,7 +42,7 @@ Rosetta works inside the document's own structure rather than on extracted text.
 
 ## Brand Commitments
 
-- The product name is **Rosetta**. The logo mark, colours and typography are open to replacement.
+- The product name is **Kartouche**. The logo mark, colours and typography are open to replacement.
 - Must not read as a generic SaaS / AI-startup template (gradients, glow, vague claims).
 
 ## Evidence on Hand
